@@ -38,10 +38,7 @@ class PageStart(tk.Frame):
         self._save_obj = SaveComponents(key='ctd_processing')
 
         self.sbe_paths = paths.SBEPaths()
-        self.sbe_paths.set_config_root_directory(r'C:\mw\git\ctd_config')
-        self.sbe_paths.set_local_root_directory(r'C:\mw\temp_ctd_pre_system_data_root')
         self.sbe_processing_paths = processing.SBEProcessingPaths(self.sbe_paths)
-        self.sbe_processing_paths.platform = 'svea'
 
         self.sbe_processing = processing.SBEProcessing(sbe_paths=self.sbe_paths,
                                                        sbe_processing_paths=self.sbe_processing_paths)
@@ -84,20 +81,43 @@ class PageStart(tk.Frame):
     def close(self):
         self._save_obj.save()
 
-    def update_page(self):
-        self._update_sbe_paths()
-        self._update_local_data_directories()
-        self._update_local_file_lists()
-        self._update_files_local_source()
+    def _make_config_root_updates(self, message=False):
+        """ Makes updates relying on config root path being present """
+        if not self._config_path.value:
+            if message:
+                messagebox.showwarning('Rotkatalog saknas', f'Rootkatalog för configfiler saknas!')
+            return False
+        self.sbe_paths.set_config_root_directory(self._config_path.value)
         self._update_surfacesaok_list()
         self._update_platform_list()
-        self._update_server_info()
+        return True
 
-    def _update_sbe_paths(self):
-        """ Updates self.sbe_paths with information from widgets"""
-        self.sbe_paths.set_config_root_directory(self._config_path.value)
+    def _make_local_root_updates(self, message=False):
+        """ Makes updates relying on local root path being present """
+        if not self._local_data_path_root.value:
+            if message:
+                messagebox.showwarning('Rotkatalog saknas', f'Lokal rootkatalog saknas!')
+            return False
         self.sbe_paths.set_local_root_directory(self._local_data_path_root.value)
+        self._update_local_data_directories()
+        self._update_local_file_lists()
+        return True
+
+    def _make_server_root_updates(self, message=False):
+        """ Makes updates relying on local root path being present """
+        if not self._local_data_path_root.value:
+            if message:
+                messagebox.showwarning('Rotkatalog saknas', f'Server rootkatalog saknas!')
+            return False
         self.sbe_paths.set_server_root_directory(self._server_data_path_root.value)
+        self._update_files_local_source()
+        self._update_server_info()
+        return True
+
+    def update_page(self):
+        self._make_config_root_updates(message=False)
+        self._make_local_root_updates(message=False)
+        self._make_server_root_updates(message=False)
 
     def _update_surfacesaok_list(self):
         if not self._config_path.value:
@@ -162,7 +182,6 @@ class PageStart(tk.Frame):
                                                       **layout)
 
         tkw.grid_configure(frame, nr_rows=3, nr_columns=1)
-
 
     def _build_frame_local_data(self):
         frame = self._frame_local_data
@@ -380,12 +399,31 @@ class PageStart(tk.Frame):
         self._year.value = str(year)
 
     def _callback_continue_source(self):
+        if not self._assert_root_paths():
+            return
+
+        if not self._platform.value:
+            messagebox.showwarning('Kör processering', 'Ingen platform vald!')
+            return
+
+        if not self._surfacesoak.value:
+            messagebox.showwarning('Kör processering', 'Ingen surfacesoak vald!')
+            return
+
         selected = self._files_local_source.get_selected()
+        if not selected:
+            messagebox.showwarning('Kör processering', 'Ingen filer är valda för processering!')
+            return
+
+        local_root = self._local_data_path_root.value
+        self.sbe_paths.set_local_root_directory(local_root)
+
         self._processed_files = []
 
         for file_name in selected:
             path = Path(self._local_data_path_source.value, file_name)
             try:
+                self.sbe_processing_paths.platform = self._platform.value
                 self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
                 self.sbe_processing.set_tau_state(self._tau.value)
                 self.sbe_processing.select_file(path)
@@ -489,6 +527,7 @@ class PageStart(tk.Frame):
         path = Path(self._local_data_path_root.value)
         if not path.exists():
             raise FileNotFoundError(path)
+        self.sbe_paths.set_local_root_directory(path)
         # self._set_proper_local_root_path()
         self._update_local_data_directories()
         self._update_local_file_lists()
@@ -548,8 +587,9 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
-        self._update_files_local_nsf_not_on_server()
         self._update_files_local_nsf_selected()
+        if self.sbe_paths.get_server_directory('root'):
+            self._update_files_local_nsf_not_on_server()
 
     def _update_files_local_nsf_all(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
@@ -613,19 +653,7 @@ class PageStart(tk.Frame):
         # self._server_data_path_raw.set(path=self.sbe_paths.get_server_directory('raw', default=''))
         # self._server_data_path_cnv.set(path=self.sbe_paths.get_server_directory('cnv', default=''))
         self._server_data_path_nsf.set(path=self.sbe_paths.get_server_directory('nsf', default=''))
-
-    def old_set_proper_local_root_path(self):
-        """ Setting the proper local root file paths provided by the CtdProcessing object.
-        This is for example used in case subfolders are mandatory. """
-        self.sbe_paths.get_local_directory()
-        obj = self._get_ctd_processing_object(edit=False)
-        self._local_data_path_root.value = obj.get_local_directory()
-
-    def old_set_proper_server_root_path(self):
-        """ Setting the proper server root file paths provided by the CtdProcessing object.
-        This is for example used in case subfolders are mandatory. """
-        obj = self._get_ctd_processing_object(edit=False)
-        self._server_data_path_root.value = obj.get_server_directory()
+        self._server_data_path_nsf.set(path=self.sbe_paths.get_server_directory('nsf', default=''))
 
     def _callback_change_year(self, *args):
         year = self._year.value
