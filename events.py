@@ -10,7 +10,7 @@ class InvalidEventType(Exception):
 
 class EventTypes:
     def __init__(self):
-        self.event_types = ['select_instrument',
+        self.event_types = ['select_platform',
                             'select_surfacesoak',
                             'change_local_data_path_source',
                             'change_local_data_path_root',

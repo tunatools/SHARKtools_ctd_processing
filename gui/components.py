@@ -134,11 +134,17 @@ class LabelText(tk.Frame):
 
     @property
     def value(self):
-        return self._stringvar.get()
+        string = self._stringvar.get()
+        if not string:
+            return False
+        return string
 
     @value.setter
     def value(self, item):
-        self._stringvar.set(item)
+        if not item:
+            self._stringvar.set('')
+        else:
+            self._stringvar.set(str(item))
 
 
 class Checkbutton(tk.Frame):
@@ -307,11 +313,17 @@ class DirectoryButtonText(tk.Frame):
 
     @property
     def value(self):
-        return self._stringvar.get()
+        string = self._stringvar.get()
+        if not string:
+            return False
+        return string
 
     @value.setter
     def value(self, item):
-        self._stringvar.set(str(item))
+        if not item:
+            self._stringvar.set('')
+        else:
+            self._stringvar.set(str(item))
 
     def get(self):
         return self._root_folder
