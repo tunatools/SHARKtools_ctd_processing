@@ -459,6 +459,7 @@ class PageStart(tk.Frame):
                 self.sbe_processing.select_file(path)
                 new_path = self.sbe_processing.confirm_file(path)
                 self.sbe_processing.run_process(overwrite=self._overwrite.value)
+                self.sbe_processing.create_sensorinfo_file()
                 self._processed_files.append(new_path.stem)
             except FileExistsError:
                 print(self._overwrite.value)
