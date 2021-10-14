@@ -16,10 +16,13 @@ from ..saves import SaveComponents
 
 from ..events import post_event
 from ..events import subscribe
+from ..utils import get_files_in_directory
 
 from sharkpylib.tklib import tkinter_widgets as tkw
 
-from ctd_processing import processing
+from ctd_processing.processing.sbe_processing import SBEProcessing
+from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
+from ctd_processing import new_standard_format
 from ctd_processing import paths
 from ctd_processing import ctd_files
 from ctd_processing import file_handler
@@ -31,19 +34,19 @@ class PageStart(tk.Frame):
 
     def __init__(self, parent, parent_app, **kwargs):
         tk.Frame.__init__(self, parent, **kwargs)
-        # parent is the frame "container" in App. contoller is the App class
+        # parent is the frame "container" in App. controller is the App class
         self.parent = parent
         self.parent_app = parent_app
 
         self._save_obj = SaveComponents(key='ctd_processing')
 
         self.sbe_paths = paths.SBEPaths()
-        self.sbe_processing_paths = processing.SBEProcessingPaths(self.sbe_paths)
+        self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
 
-        self.sbe_processing = processing.SBEProcessing(sbe_paths=self.sbe_paths,
-                                                       sbe_processing_paths=self.sbe_processing_paths)
+        self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
+                                            sbe_processing_paths=self.sbe_processing_paths)
 
-        self.standard_format = processing.NewStandardFormat(paths_object=self.sbe_paths)
+        self.standard_format = new_standard_format.NewStandardFormat(paths_object=self.sbe_paths)
         self._processed_files = []
 
     @property
@@ -453,11 +456,11 @@ class PageStart(tk.Frame):
         for file_name in selected:
             path = Path(self._local_data_path_source.value, file_name)
             try:
+                self.sbe_processing.select_file(path)
+                new_path = self.sbe_processing.confirm_file(path)
                 self.sbe_processing_paths.platform = self._platform.value
                 self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
                 self.sbe_processing.set_tau_state(self._tau.value)
-                self.sbe_processing.select_file(path)
-                new_path = self.sbe_processing.confirm_file(path)
                 self.sbe_processing.run_process(overwrite=self._overwrite.value)
                 self.sbe_processing.create_sensorinfo_file()
                 self._processed_files.append(new_path.stem)
@@ -570,7 +573,7 @@ class PageStart(tk.Frame):
         path = Path(self._server_data_path_root.value)
         if not path.exists():
             raise FileNotFoundError(path)
-        # self._set_proper_server_root_path()
+        self.sbe_paths.set_server_root_directory(path)
         self._update_server_data_directories()
 
     def _callback_update_series_local_source(self, *args):
@@ -606,7 +609,7 @@ class PageStart(tk.Frame):
         self._files_local_raw.update_items(files)
 
     def _update_files_local_cnv(self):
-        files = get_files_in_directory(self._local_data_path_cnv.value)
+        files = get_files_in_directory(self._local_data_path_cnv.value, suffix='.cnv')
         self._files_local_cnv.update_items(files)
         self._files_local_cnv.deselect_all()
         all_cnv_files = {}
@@ -686,7 +689,6 @@ class PageStart(tk.Frame):
         # self._server_data_path_raw.set(path=self.sbe_paths.get_server_directory('raw', default=''))
         # self._server_data_path_cnv.set(path=self.sbe_paths.get_server_directory('cnv', default=''))
         self._server_data_path_nsf.set(path=self.sbe_paths.get_server_directory('nsf', default=''))
-        self._server_data_path_nsf.set(path=self.sbe_paths.get_server_directory('nsf', default=''))
 
     def _callback_change_year(self, *args):
         year = self._year.value
@@ -696,27 +698,6 @@ class PageStart(tk.Frame):
         self._update_server_data_directories()
         self._update_server_file_lists()
         # self._server_based_on.value = f'Valt år {year}'
-
-
-def get_files_in_directory(directory, suffix=None):
-    files = []
-    directory = Path(directory)
-    if not directory.exists():
-        return []
-    for path in directory.iterdir():
-        if not path.is_file():
-            continue
-        if suffix and suffix != path.suffix:
-            continue
-        files.append(path.name)
-    return files
-
-
-
-def test():
-    pass
-
-
 
 
 
