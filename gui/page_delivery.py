@@ -31,11 +31,11 @@ class PageStart(tk.Frame):
 
     def __init__(self, parent, parent_app, **kwargs):
         tk.Frame.__init__(self, parent, **kwargs)
-        # parent is the frame "container" in App. contoller is the App class
+        # parent is the frame "container" in App. controller is the App class
         self.parent = parent
         self.parent_app = parent_app
 
-        self._save_obj = SaveComponents(key='ctd_processing')
+        # self._save_obj = SaveComponents(key='ctd_processing')
 
         self.sbe_paths = paths.SBEPaths()
 
@@ -49,13 +49,14 @@ class PageStart(tk.Frame):
         :return:
         """
         self._build_frame()
-        self._save_obj.add_components(
-        )
+        # self._save_obj.add_components(
+        # )
 
-        self._save_obj.load()
+        # self._save_obj.load()
 
     def close(self):
-        self._save_obj.save()
+        pass
+        # self._save_obj.save()
 
     def _build_frame(self):
         layout = dict(padx=5,
