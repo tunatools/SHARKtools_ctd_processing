@@ -5,9 +5,11 @@
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
 import tkinter as tk
+import traceback
 from tkinter import messagebox
 
 import datetime
+import time
 from pathlib import Path
 import shutil
 
@@ -28,6 +30,8 @@ from ctd_processing import ctd_files
 from ctd_processing import file_handler
 
 from ctdpy.core import session as ctdpy_session
+from ctdpy.core.utils import generate_filepaths, get_reversed_dictionary
+from sharkpylib.qc.qc_default import QCBlueprint
 
 
 class PageStart(tk.Frame):
@@ -151,6 +155,7 @@ class PageStart(tk.Frame):
     def _update_local_file_lists(self):
         self._update_files_local_raw()
         self._update_files_local_cnv()
+        self._update_files_local_qc()
         self._update_files_local_nsf()
 
     def _clear_local_file_lists(self):
@@ -209,7 +214,7 @@ class PageStart(tk.Frame):
                                                                    row=0, column=0, **layout)
 
         self._notebook_local = tkw.NotebookWidget(frame, 
-                                                  frames=['Börja här', 'raw', 'cnv', 'nsf'],
+                                                  frames=['Börja här', 'raw', 'cnv', 'Granskning', 'nsf'],
                                                   row=1, column=0, **layout)
 
         tkw.grid_configure(frame, nr_rows=2)
@@ -217,6 +222,7 @@ class PageStart(tk.Frame):
         self._build_frame_local_source()
         self._build_frame_local_raw()
         self._build_frame_local_cnv()
+        self._build_frame_local_qc()
         self._build_frame_local_nsf()
 
     def _build_frame_local_source(self):
@@ -298,6 +304,34 @@ class PageStart(tk.Frame):
         self._button_continue_cnv = tk.Button(frame, text='Skapa standardformat', command=self._callback_continue_cnv)
         self._button_continue_cnv.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        tkw.grid_configure(frame, nr_rows=r + 1)
+
+    def _build_frame_local_qc(self):
+        frame = self._notebook_local('Granskning')
+        layout = dict(padx=5, pady=2, sticky='nw')
+        r = 0
+        self._local_data_path_qc = components.DirectoryLabelText(frame, 'local_data_path_qc',
+                                                                  title='Sökväg till lokala nsf-filer:',
+                                                                  disabled=True,
+                                                                  # end_with_folders=['data', '<YEAR>', 'raw'],
+                                                                  row=r, column=0, **layout)
+
+        r += 1
+        tk.Label(frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=r,
+                                                                                                           column=0,
+                                                                                                           **layout)
+
+        r += 1
+        listbox_prop = {'bg': '#e38484'}
+        listbox_prop.update(self._listbox_prop)
+        self._files_local_qc = tkw.ListboxSelectionWidget(frame, row=r, column=0,
+                                                           count_text='filer',
+                                                           prop=listbox_prop, **layout)
+
+        r += 1
+        self._button_automatic_qc = tk.Button(frame, text='Utför automatisk granskning', command=self._callback_continue_automatic_qc)
+        self._button_automatic_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
+
         tkw.grid_configure(frame, nr_rows=r+1)
 
     def _build_frame_local_nsf(self):
@@ -378,6 +412,52 @@ class PageStart(tk.Frame):
                                                      command=self._callback_copy_selected_to_server)
         self._button_continue_nsf_select.grid(row=2, column=0, padx=5, pady=2, sticky='s')
         tkw.grid_configure(self._notebook_copy_to_server.frame_valj, nr_rows=2)
+
+    def _callback_continue_automatic_qc(self):
+
+        file_names = self._files_local_qc.get_selected()
+        if not file_names:
+            messagebox.showwarning('Automatisk granskning', 'Inga filer är valda för granskning!')
+            return
+        files = []
+        for name in file_names:
+            handler = file_handler.SBEFileHandler(self.sbe_paths)
+            handler.select_file(name)
+            files.append(str(handler.get_local_file_path('nsf')))
+        if not files:
+            messagebox.showwarning('Automatisk granskning', 'Kunde inte hitta standartformatfiler. \nIngen granskning gjord!')
+            return
+
+        session = ctdpy_session.Session(filepaths=files,
+                                        reader='ctd_stdfmt')
+
+        datasets = session.read()
+
+        for data_key, item in datasets[0].items():
+            # print(data_key)
+            parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
+            qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
+            qc_run()
+
+        data_path = session.save_data(datasets,
+                                      writer='ctd_standard_template', return_data_path=True,
+                                      save_path=self.sbe_paths.get_local_directory('temp'),
+                                      )
+
+        # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
+        data_path = Path(data_path)
+        time.sleep(.2)
+        print('='*30)
+        for source_path in Path(data_path).iterdir():
+            target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
+            print('source_path:', source_path)
+            print('target_path:', target_path)
+            if target_path.exists() and not self._overwrite:
+                continue
+            shutil.copyfile(source_path, target_path)
+
+        return data_path
+        # return output_directory
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -621,6 +701,10 @@ class PageStart(tk.Frame):
         select_files = [all_cnv_files.get(name) for name in self._processed_files if all_cnv_files.get(name)]
         self._files_local_cnv.move_items_to_selected(select_files)
 
+    def _update_files_local_qc(self):
+        files = get_files_in_directory(self._local_data_path_qc.value)
+        self._files_local_qc.update_items(files)
+
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_selected()
@@ -670,6 +754,7 @@ class PageStart(tk.Frame):
         """ Sets local data paths based on info in processing.CtdProcessing object. """
         self._local_data_path_raw.set(path=self.sbe_paths.get_local_directory('raw'))
         self._local_data_path_cnv.set(path=self.sbe_paths.get_local_directory('cnv'))
+        self._local_data_path_qc.set(path=self.sbe_paths.get_local_directory('nsf'))
         self._local_data_path_nsf.set(path=self.sbe_paths.get_local_directory('nsf'))
 
     def _update_server_file_lists(self):
