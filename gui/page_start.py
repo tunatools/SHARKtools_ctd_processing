@@ -24,10 +24,13 @@ from sharkpylib.tklib import tkinter_widgets as tkw
 
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
-from ctd_processing import new_standard_format
+from ctd_processing import standard_format
 from ctd_processing import paths
 from ctd_processing import ctd_files
 from ctd_processing import file_handler
+from ctd_processing import exceptions
+
+from ctd_processing.visual_qc.vis_qc import VisQC
 
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import generate_filepaths, get_reversed_dictionary
@@ -50,8 +53,12 @@ class PageStart(tk.Frame):
         self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
                                             sbe_processing_paths=self.sbe_processing_paths)
 
-        self.standard_format = new_standard_format.NewStandardFormat(paths_object=self.sbe_paths)
+        self.bokeh_server = None
+
         self._processed_files = []
+        self._converted_files = []
+
+        self._button_bg_color = None
 
     @property
     def user(self):
@@ -87,6 +94,7 @@ class PageStart(tk.Frame):
         # self.update_page()
 
     def close(self):
+        self._callback_stop_manual_qc()
         self._save_obj.save()
 
     def _callback_select_platform(self, *args):
@@ -255,6 +263,8 @@ class PageStart(tk.Frame):
         self._button_continue_source = tk.Button(frame, text='Kör processering', command=self._callback_continue_source)
         self._button_continue_source.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        self._button_bg_color = self._button_continue_source.cget('bg')
+
         tkw.grid_configure(frame, nr_rows=4, nr_columns=2)
 
     def _build_frame_local_raw(self):
@@ -309,30 +319,47 @@ class PageStart(tk.Frame):
     def _build_frame_local_qc(self):
         frame = self._notebook_local('Granskning')
         layout = dict(padx=5, pady=2, sticky='nw')
-        r = 0
-        self._local_data_path_qc = components.DirectoryLabelText(frame, 'local_data_path_qc',
+
+        left_frame = tk.Frame(frame)
+        left_frame.grid(row=0, column=0)
+        right_frame = tk.Frame(frame)
+        right_frame.grid(row=0, column=1)
+        tkw.grid_configure(frame, nr_rows=1, nr_columns=2)
+
+        # Left frame
+        self._local_data_path_qc = components.DirectoryLabelText(left_frame, 'local_data_path_qc',
                                                                   title='Sökväg till lokala nsf-filer:',
                                                                   disabled=True,
                                                                   # end_with_folders=['data', '<YEAR>', 'raw'],
-                                                                  row=r, column=0, **layout)
+                                                                  row=0, column=0, **layout)
 
-        r += 1
-        tk.Label(frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=r,
+        tk.Label(left_frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=1,
                                                                                                            column=0,
                                                                                                            **layout)
 
-        r += 1
         listbox_prop = {'bg': '#e38484'}
         listbox_prop.update(self._listbox_prop)
-        self._files_local_qc = tkw.ListboxSelectionWidget(frame, row=r, column=0,
-                                                           count_text='filer',
-                                                           prop=listbox_prop, **layout)
+        self._files_local_qc = tkw.ListboxSelectionWidget(left_frame, row=2, column=0,
+                                                          count_text='filer',
+                                                          prop=listbox_prop, **layout)
 
-        r += 1
-        self._button_automatic_qc = tk.Button(frame, text='Utför automatisk granskning', command=self._callback_continue_automatic_qc)
-        self._button_automatic_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
-        tkw.grid_configure(frame, nr_rows=r+1)
+        tkw.grid_configure(left_frame, nr_rows=3, nr_columns=1)
+
+        # Right frame
+        self._button_automatic_qc = tk.Button(right_frame, text='Utför automatisk granskning',
+                                              command=self._callback_continue_automatic_qc)
+        self._button_automatic_qc.grid(row=0, column=0, columnspan=2, padx=5, pady=2, sticky='se')
+
+        self._button_open_manual_qc = tk.Button(right_frame, text='Öppna manuell granskning (alla filer)',
+                                                command=self._callback_start_manual_qc)
+        self._button_open_manual_qc.grid(row=1, column=0, padx=5, pady=2, sticky='se')
+
+        self._button_close_manual_qc = tk.Button(right_frame, text='Stäng manuell granskning',
+                                                 command=self._callback_stop_manual_qc)
+        self._button_close_manual_qc.grid(row=2, column=0, padx=5, pady=2, sticky='se')
+
+        tkw.grid_configure(right_frame, nr_rows=3, nr_columns=1)
 
     def _build_frame_local_nsf(self):
         frame = self._notebook_local('nsf')
@@ -344,6 +371,7 @@ class PageStart(tk.Frame):
                                                                   row=0, column=0, columnspan=2, **layout)
 
         self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=['Välj', 'Alla'])
+        self._notebook_copy_to_server.select_frame('Alla')
 
         tkw.grid_configure(frame, nr_rows=2)
 
@@ -446,7 +474,7 @@ class PageStart(tk.Frame):
 
         # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
         data_path = Path(data_path)
-        time.sleep(.2)
+        time.sleep(.5)
         print('='*30)
         for source_path in Path(data_path).iterdir():
             target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
@@ -458,6 +486,24 @@ class PageStart(tk.Frame):
 
         return data_path
         # return output_directory
+
+    def _callback_start_manual_qc(self):
+        self._button_open_manual_qc.config(state='disabled')
+        self._button_automatic_qc.config(state='disabled')
+        self._button_close_manual_qc.config(bg='red')
+        self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'))
+        self.bokeh_server.start()
+
+    def _callback_stop_manual_qc(self):
+        if not self.bokeh_server:
+            return
+        self.bokeh_server.stop()
+        self.bokeh_server = None
+        self._button_open_manual_qc.config(state='normal')
+        self._button_automatic_qc.config(state='normal')
+        self._button_close_manual_qc.config(bg=self._button_bg_color)
+        self._update_files_local_nsf()
+        self._notebook_local.select_frame('nsf')
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -545,22 +591,30 @@ class PageStart(tk.Frame):
                 self.sbe_processing.create_sensorinfo_file()
                 self._processed_files.append(new_path.stem)
             except FileExistsError:
-                print(self._overwrite.value)
                 messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
                 return
+            except Exception as e:
+                messagebox.showerror('Något gick fel', e)
+                raise
 
         self._update_local_file_lists()
         self._notebook_local.select_frame('cnv')
 
     def _callback_continue_cnv(self):
+        self._converted_files = []
         cnv_files = self._get_selected_local_cnv_file_paths()
         if not cnv_files:
-            messagebox.showerror('Creating metadata file', 'No CNV files selected to create metadata file!')
+            messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
             return
+        self.standard_format = standard_format.CreateNewStandardFormat(paths_object=self.sbe_paths)
         self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
+        self._update_files_local_qc()
         self._update_files_local_nsf()
         self._update_server_info()
-        self._notebook_local.select_frame('nsf')
+
+        self._converted_files = [path.stem for path in cnv_files]
+        self._update_files_local_qc()
+        self._notebook_local.select_frame('Granskning')
 
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
@@ -680,7 +734,9 @@ class PageStart(tk.Frame):
         path = Path(self._local_data_path_source.value)
         if not path.exists():
             self._files_local_source.update_items()
-            raise FileNotFoundError(path)
+            self._local_data_path_source = ''
+            return
+            # raise FileNotFoundError(path)
         files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
         self._files_local_source.update_items(sorted(files))
 
@@ -704,6 +760,15 @@ class PageStart(tk.Frame):
     def _update_files_local_qc(self):
         files = get_files_in_directory(self._local_data_path_qc.value)
         self._files_local_qc.update_items(files)
+        self._files_local_qc.deselect_all()
+        all_cnv_files = {}
+        for item in self._files_local_qc.get_all_items():
+            if not item.endswith('.txt'):
+                continue
+            name, suffix = item.split('.')
+            all_cnv_files[name] = item
+        select_files = [all_cnv_files.get(name) for name in self._converted_files if all_cnv_files.get(name)]
+        self._files_local_qc.move_items_to_selected(select_files)
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
@@ -720,9 +785,12 @@ class PageStart(tk.Frame):
         handler = file_handler.SBEFileHandler(self.sbe_paths)
         not_on_server = []
         for file in files:
-            handler.select_file(file)
-            if handler.not_on_server():
-                not_on_server.append(file)
+            try:
+                handler.select_file(file)
+                if handler.not_on_server():
+                    not_on_server.append(file)
+            except exceptions.InvalidFileNameFormat:
+                continue
         self._files_local_nsf_missing.update_items(not_on_server)
 
     def _update_files_local_nsf_not_updated_on_server(self):
@@ -730,9 +798,12 @@ class PageStart(tk.Frame):
         handler = file_handler.SBEFileHandler(self.sbe_paths)
         not_updated_on_server = []
         for file in files:
-            handler.select_file(file)
-            if handler.not_updated_on_server():
-                not_updated_on_server.append(file)
+            try:
+                handler.select_file(file)
+                if handler.not_updated_on_server():
+                    not_updated_on_server.append(file)
+            except exceptions.InvalidFileNameFormat:
+                continue
         self._files_local_nsf_not_updated.update_items(not_updated_on_server)
 
     def _update_files_local_nsf_selected(self):
