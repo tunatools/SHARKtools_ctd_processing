@@ -29,6 +29,7 @@ from ctd_processing import paths
 from ctd_processing import ctd_files
 from ctd_processing import file_handler
 from ctd_processing import exceptions
+from ctd_processing.standard_format import StandardFormatComments
 
 from ctd_processing.visual_qc.vis_qc import VisQC
 
@@ -347,19 +348,23 @@ class PageStart(tk.Frame):
         tkw.grid_configure(left_frame, nr_rows=3, nr_columns=1)
 
         # Right frame
+        self._intvar_allow_automatic_qc_same_day = tk.IntVar()
+        cb = tk.Checkbutton(right_frame, text='Tillåt automatisk granskning samma dag',  variable=self._intvar_allow_automatic_qc_same_day)
+        cb.grid(row=0, column=0, padx=5, pady=2, sticky='se')
+
         self._button_automatic_qc = tk.Button(right_frame, text='Utför automatisk granskning',
                                               command=self._callback_continue_automatic_qc)
-        self._button_automatic_qc.grid(row=0, column=0, columnspan=2, padx=5, pady=2, sticky='se')
+        self._button_automatic_qc.grid(row=1, column=0, padx=5, pady=2, sticky='se')
 
         self._button_open_manual_qc = tk.Button(right_frame, text='Öppna manuell granskning (alla filer)',
                                                 command=self._callback_start_manual_qc)
-        self._button_open_manual_qc.grid(row=1, column=0, padx=5, pady=2, sticky='se')
+        self._button_open_manual_qc.grid(row=2, column=0, padx=5, pady=2, sticky='se')
 
         self._button_close_manual_qc = tk.Button(right_frame, text='Stäng manuell granskning',
                                                  command=self._callback_stop_manual_qc)
-        self._button_close_manual_qc.grid(row=2, column=0, padx=5, pady=2, sticky='se')
+        self._button_close_manual_qc.grid(row=3, column=0, padx=5, pady=2, sticky='se')
 
-        tkw.grid_configure(right_frame, nr_rows=3, nr_columns=1)
+        tkw.grid_configure(right_frame, nr_rows=4, nr_columns=1)
 
     def _build_frame_local_nsf(self):
         frame = self._notebook_local('nsf')
@@ -448,44 +453,60 @@ class PageStart(tk.Frame):
             messagebox.showwarning('Automatisk granskning', 'Inga filer är valda för granskning!')
             return
         files = []
+        nr_files_qc = 0
         for name in file_names:
             handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_file(name)
-            files.append(str(handler.get_local_file_path('nsf')))
+            local_file_path = handler.get_local_file_path('nsf')
+            if not local_file_path:
+                continue
+            if not self._intvar_allow_automatic_qc_same_day.get():
+                sf = StandardFormatComments(local_file_path)
+                if sf.has_automatic_qc_today():
+                    continue
+            files.append(str(local_file_path))
+            nr_files_qc += 1
+
         if not files:
             messagebox.showwarning('Automatisk granskning', 'Kunde inte hitta standartformatfiler. \nIngen granskning gjord!')
             return
 
-        session = ctdpy_session.Session(filepaths=files,
-                                        reader='ctd_stdfmt')
+        tkw.disable_buttons_in_class(self)
+        try:
+            session = ctdpy_session.Session(filepaths=files,
+                                            reader='ctd_stdfmt')
 
-        datasets = session.read()
+            datasets = session.read()
 
-        for data_key, item in datasets[0].items():
-            # print(data_key)
-            parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-            qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
-            qc_run()
+            for data_key, item in datasets[0].items():
+                # print(data_key)
+                parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
+                qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
+                qc_run()
 
-        data_path = session.save_data(datasets,
-                                      writer='ctd_standard_template', return_data_path=True,
-                                      save_path=self.sbe_paths.get_local_directory('temp'),
-                                      )
+            data_path = session.save_data(datasets,
+                                          writer='ctd_standard_template', return_data_path=True,
+                                          save_path=self.sbe_paths.get_local_directory('temp'),
+                                          )
 
-        # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
-        data_path = Path(data_path)
-        time.sleep(.5)
-        print('='*30)
-        for source_path in Path(data_path).iterdir():
-            target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
-            print('source_path:', source_path)
-            print('target_path:', target_path)
-            if target_path.exists() and not self._overwrite:
-                continue
-            shutil.copyfile(source_path, target_path)
+            # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
+            data_path = Path(data_path)
+            time.sleep(.5)
+            print('='*30)
+            for source_path in Path(data_path).iterdir():
+                target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
+                print('source_path:', source_path)
+                print('target_path:', target_path)
+                if target_path.exists() and not self._overwrite:
+                    continue
+                shutil.copyfile(source_path, target_path)
 
-        return data_path
-        # return output_directory
+            messagebox.showinfo('Automatisk granskning', f'{nr_files_qc} av {len(file_names)} granskade!')
+            return data_path
+        except Exception:
+            messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+        finally:
+            tkw.enable_buttons_in_class(self)
 
     def _callback_start_manual_qc(self):
         self._button_open_manual_qc.config(state='disabled')
@@ -854,6 +875,7 @@ class PageStart(tk.Frame):
         self._update_server_data_directories()
         self._update_server_file_lists()
         # self._server_based_on.value = f'Valt år {year}'
+
 
 
 
