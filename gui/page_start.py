@@ -615,7 +615,7 @@ class PageStart(tk.Frame):
                 messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
                 return
             except Exception as e:
-                messagebox.showerror('Något gick fel', e)
+                messagebox.showerror('Något gick fel', traceback.format_exc())
                 raise
 
         self._update_local_file_lists()
