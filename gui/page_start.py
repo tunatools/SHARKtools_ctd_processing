@@ -627,7 +627,7 @@ class PageStart(tk.Frame):
         if not cnv_files:
             messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
             return
-        self.standard_format = standard_format.CreateNewStandardFormat(paths_object=self.sbe_paths)
+        self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
         self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
         self._update_files_local_qc()
         self._update_files_local_nsf()
