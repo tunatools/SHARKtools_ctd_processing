@@ -26,7 +26,8 @@ from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing import standard_format
 from ctd_processing import paths
-from ctd_processing import ctd_files
+# from ctd_processing import ctd_files
+from sharkpylib import seabird
 from ctd_processing import file_handler
 from ctd_processing import exceptions
 from ctd_processing.standard_format import StandardFormatComments
@@ -772,7 +773,8 @@ class PageStart(tk.Frame):
             self._local_data_path_source = ''
             return
             # raise FileNotFoundError(path)
-        files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
+        # files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
+        files = seabird.get_file_names_in_directory(self._local_data_path_source.value, 'hex')
         self._files_local_source.update_items(sorted(files))
 
     def _update_files_local_raw(self):
