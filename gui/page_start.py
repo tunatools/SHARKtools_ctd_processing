@@ -222,9 +222,12 @@ class PageStart(tk.Frame):
                                                                    title='Rootkatalog för lokal data:',
                                                                    row=0, column=0, **layout)
 
+        self._button_uppdate = tk.Button(frame, text='Uppdatera lokalt mappinnehåll mm.', command=self._update_all_local)
+        self._button_uppdate.grid(row=0, column=1, padx=5, pady=2, sticky='ne')
+
         self._notebook_local = tkw.NotebookWidget(frame, 
                                                   frames=['Börja här', 'raw', 'cnv', 'Granskning', 'nsf'],
-                                                  row=1, column=0, **layout)
+                                                  row=1, column=0, columnspan=2, **layout)
 
         tkw.grid_configure(frame, nr_rows=2)
         
@@ -749,6 +752,17 @@ class PageStart(tk.Frame):
             return None
         path = Path(self._local_data_path_source.value, selected[-1])
         self.sbe_processing.select_file(path)
+
+    def _update_all_local(self):
+        self._update_files_local_source()
+        self._update_files_local_raw()
+        self._update_files_local_cnv()
+        self._update_files_local_nsf()
+        self._update_files_local_qc()
+        self._update_files_local_nsf_all()
+        self._update_files_local_nsf_selected()
+        self._update_files_local_nsf_not_on_server()
+        self._update_files_local_nsf_not_updated_on_server()
 
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
