@@ -26,7 +26,6 @@ from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing import standard_format
 from ctd_processing import paths
-# from ctd_processing import ctd_files
 from sharkpylib import seabird
 from ctd_processing import file_handler
 from ctd_processing import exceptions
