@@ -4,38 +4,31 @@
 # Copyright (c) 2018 SMHI, Swedish Meteorological and Hydrological Institute
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
+import shutil
+import time
 import tkinter as tk
 import traceback
+from pathlib import Path
 from tkinter import messagebox
 
-import datetime
-import time
-from pathlib import Path
-import shutil
-
-from . import components
-from ..saves import SaveComponents
-
-from ..events import post_event
-from ..events import subscribe
-from ..utils import get_files_in_directory
-
-from sharkpylib.tklib import tkinter_widgets as tkw
-
+import file_explorer
+from ctd_processing import exceptions
+from ctd_processing import file_handler
+from ctd_processing import standard_format
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
-from ctd_processing import standard_format
-from ctd_processing import paths
-from sharkpylib import seabird
-from ctd_processing import file_handler
-from ctd_processing import exceptions
 from ctd_processing.standard_format import StandardFormatComments
-
 from ctd_processing.visual_qc.vis_qc import VisQC
-
 from ctdpy.core import session as ctdpy_session
-from ctdpy.core.utils import generate_filepaths, get_reversed_dictionary
+from ctdpy.core.utils import get_reversed_dictionary
+from file_explorer.seabird import paths
 from sharkpylib.qc.qc_default import QCBlueprint
+from sharkpylib.tklib import tkinter_widgets as tkw
+
+from . import components
+from ..events import subscribe
+from ..saves import SaveComponents
+from ..utils import get_files_in_directory
 
 
 class PageStart(tk.Frame):
@@ -89,10 +82,7 @@ class PageStart(tk.Frame):
         subscribe('update_series_local_source', self._callback_update_series_local_source)
         subscribe('change_year', self._callback_change_year)
 
-        # subscribe('select_surfacesoak', self._callback_select_surfacesoak)
         subscribe('select_platform', self._callback_select_platform)
-
-        # self.update_page()
 
     def close(self):
         self._callback_stop_manual_qc()
@@ -104,17 +94,14 @@ class PageStart(tk.Frame):
 
     def _make_config_root_updates(self, message=False):
         """ Makes updates relying on config root path being present """
-        print('_make_config_root_updates')
         if not self._config_path.value:
             if message:
                 messagebox.showwarning('Rotkatalog saknas', f'Rotkatalog för configfiler saknas!')
             return False
-        print('=== ok')
         self.sbe_paths.set_config_root_directory(self._config_path.value)
         self.sbe_processing_paths.update_paths()
         self._update_platform_list()
         if self._platform.value:
-            print('¤¤¤ YES')
             self.sbe_processing.set_platform(self._platform.value)
             self._update_surfacesaok_list()
 
@@ -773,7 +760,7 @@ class PageStart(tk.Frame):
             return
             # raise FileNotFoundError(path)
         # files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
-        files = seabird.get_file_names_in_directory(self._local_data_path_source.value, 'hex')
+        files = file_explorer.get_file_names_in_directory(self._local_data_path_source.value, 'hex')
         self._files_local_source.update_items(sorted(files))
 
     def _update_files_local_raw(self):
