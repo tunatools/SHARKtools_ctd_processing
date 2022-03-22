@@ -469,7 +469,6 @@ class PageStart(tk.Frame):
             datasets = session.read()
 
             for data_key, item in datasets[0].items():
-                # print(data_key)
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
                 qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
                 qc_run()
@@ -482,11 +481,8 @@ class PageStart(tk.Frame):
             # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
             data_path = Path(data_path)
             time.sleep(.5)
-            print('='*30)
             for source_path in Path(data_path).iterdir():
                 target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
-                print('source_path:', source_path)
-                print('target_path:', target_path)
                 if target_path.exists() and not self._overwrite:
                     continue
                 shutil.copyfile(source_path, target_path)
@@ -592,21 +588,36 @@ class PageStart(tk.Frame):
 
         for file_name in selected:
             path = Path(self._local_data_path_source.value, file_name)
-            try:
-                self.sbe_processing.select_file(path)
-                new_path = self.sbe_processing.confirm_file(path)
-                self.sbe_processing_paths.platform = self._platform.value
-                self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
-                self.sbe_processing.set_tau_state(self._tau.value)
-                self.sbe_processing.run_process(overwrite=self._overwrite.value)
-                self.sbe_processing.create_sensorinfo_file()
-                self._processed_files.append(new_path.stem)
-            except FileExistsError:
-                messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
-                return
-            except Exception as e:
-                messagebox.showerror('Något gick fel', traceback.format_exc())
-                raise
+            ignore_mismatch = False
+            continue_trying = True
+            while continue_trying:
+                try:
+                    self.sbe_processing.select_file(path)
+                    new_path = self.sbe_processing.confirm_file(path)
+                    self.sbe_processing_paths.platform = self._platform.value
+                    self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
+                    self.sbe_processing.set_tau_state(self._tau.value)
+                    self.sbe_processing.run_process(overwrite=self._overwrite.value, ignore_mismatch=ignore_mismatch)
+                    self.sbe_processing.create_sensorinfo_file()
+                    self.sbe_processing.create_zip_with_psa_files()
+                    self._processed_files.append(new_path.stem)
+                    continue_trying = False
+                except FileExistsError:
+                    messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
+                    return
+                except file_explorer.seabird.MismatchWarning as e:
+                    ans = messagebox.askyesno('Mismatch mellan filer',
+                                                f"""{e.data}
+                                                Om parameter saknas i datcnv bör du fundera på att uppdatera ctd_config. 
+                                                Denna varning kan ignoreras, du får då hantera "problemet" vidare i Seasave. 
+                                                Vill du fortsätta?""")
+                    if ans is True:
+                        ignore_mismatch = True
+                    else:
+                        return
+                except Exception as e:
+                    messagebox.showerror('Något gick fel', traceback.format_exc())
+                    raise
 
         self._update_local_file_lists()
         self._notebook_local.select_frame('cnv')
