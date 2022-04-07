@@ -31,6 +31,14 @@ from ..saves import SaveComponents
 from ..utils import get_files_in_directory
 
 
+LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka',
+                                       fg='red',
+                                       font='Helvetica 12 bold'),
+                      title_selected=dict(text='Valda filer',
+                                          fg='red',
+                                          font='Helvetica 12 bold'),)
+
+
 class PageStart(tk.Frame):
 
     def __init__(self, parent, parent_app, **kwargs):
@@ -69,8 +77,10 @@ class PageStart(tk.Frame):
                                       self._server_data_path_root,
                                       self._config_path,
                                       self._surfacesoak,
+                                      self._tau,
                                       self._platform,
                                       self._overwrite,
+                                      self._year,
         )
 
         self._save_obj.load()
@@ -83,6 +93,13 @@ class PageStart(tk.Frame):
         subscribe('change_year', self._callback_change_year)
 
         subscribe('select_platform', self._callback_select_platform)
+
+        try:
+            self._callback_change_year()
+            self._update_all_local()
+            self._update_all_server()
+        except:
+            pass
 
     def close(self):
         self._callback_stop_manual_qc()
@@ -178,7 +195,6 @@ class PageStart(tk.Frame):
 
         tkw.grid_configure(self, nr_rows=3, nr_columns=1)
 
-        # self._build_left_frame()
         self._build_top_frame()
         self._build_frame_local_data()
         self._build_frame_server_data()
@@ -199,21 +215,33 @@ class PageStart(tk.Frame):
         self._platform = components.LabelDropdownList(frame, 'platform', title='Platform', row=2, column=0,
                                                       **layout)
 
-        tkw.grid_configure(frame, nr_rows=3, nr_columns=1)
+        self._year = components.YearEntry(frame, 'year', title='År', row=2, column=1, **layout)
+
+        # self._button_update = tk.Button(frame, text='Uppdatera mappinnehåll mm.',
+        #                                  command=self._update_all_local)
+        # self._button_update.grid(row=2, column=1, padx=5, pady=2, sticky='ne')
+
+        tkw.grid_configure(frame, nr_rows=3, nr_columns=2)
+
+    def _update_latest(self):
+        pass
+
+    def _run_latest(self):
+        pass
 
     def _build_frame_local_data(self):
         frame = self._frame_local_data
         layout = dict(padx=5, pady=2, sticky='nw')
         
         self._local_data_path_root = components.DirectoryLabelText(frame, 'local_data_path_root',
-                                                                   title='Rootkatalog för lokal data:',
+                                                                   title='Rotkatalog för lokal data:',
                                                                    row=0, column=0, **layout)
 
-        self._button_uppdate = tk.Button(frame, text='Uppdatera lokalt mappinnehåll mm.', command=self._update_all_local)
-        self._button_uppdate.grid(row=0, column=1, padx=5, pady=2, sticky='ne')
+        self._button_update = tk.Button(frame, text='Uppdatera lokalt mappinnehåll mm.', command=self._update_all_local)
+        self._button_update.grid(row=0, column=1, padx=5, pady=2, sticky='ne')
 
         self._notebook_local = tkw.NotebookWidget(frame, 
-                                                  frames=['Börja här', 'raw', 'cnv', 'Granskning', 'nsf'],
+                                                  frames=['Börja här', 'raw', 'cnv', 'Granskning', 'Standardformat'],
                                                   row=1, column=0, columnspan=2, **layout)
 
         tkw.grid_configure(frame, nr_rows=2)
@@ -233,22 +261,20 @@ class PageStart(tk.Frame):
                                                                       row=r, column=0, columnspan=2, **layout)
 
         r += 1
-        tk.Label(frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=r, column=0, **layout)
-
-        r += 1
         listbox_prop = {'bg': '#b5c1ff'}
         listbox_prop.update(self._listbox_prop)
         self._files_local_source = tkw.ListboxSelectionWidget(frame, row=r, column=0, columnspan=2,
                                                               count_text='filer',
                                                               callback=self._callback_update_series_local_source,
-                                                              prop=listbox_prop, **layout)
+                                                              prop=listbox_prop,
+                                                              **LISTBOX_TITLES,
+                                                              **layout)
 
         r += 1
         self._surfacesoak = components.LabelDropdownList(frame, 'surfacesoak', title='Surfacesoak', width=15,
                                                          row=r, column=0, **layout)
 
         self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=1, **layout)
-        self._tau.value = True
 
         r += 1
         self._button_continue_source = tk.Button(frame, text='Kör processering', command=self._callback_continue_source)
@@ -263,19 +289,14 @@ class PageStart(tk.Frame):
         layout = dict(padx=5, pady=2, sticky='nw')
         self._local_data_path_raw = components.DirectoryLabelText(frame, 'local_data_path_raw',
                                                                   title='Sökväg till lokala raw-filer:',
-                                                                  # end_with_folders=['data', '<YEAR>', 'raw'],
                                                                   row=0, column=0, columnspan=2, **layout)
-        # self._files_local_raw = tkw.ListboxSelectionWidget(frame, row=1, column=0, columnspan=2,
-        #                                                     prop={'width': 45, 'height': 8}, **layout)
-        listbox_prop = {'bg': '#9deda3'}
+        listbox_prop = {}
         listbox_prop.update(self._listbox_prop)
+        listbox_prop.update({'bg': '#9deda3',
+                             'width': 60})
         self._files_local_raw = tkw.ListboxWidget(frame, row=1, column=0, columnspan=2,
                                                   include_delete_button=False,
                                                   prop_listbox=listbox_prop, **layout)
-
-
-        # self._button_continue_raw = tk.Button(frame, text='Kör processering', command=self._callback_continue_raw)
-        # self._button_continue_raw.grid(row=3, column=1, padx=5, pady=2, sticky='se')
 
         tkw.grid_configure(frame, nr_rows=2)
 
@@ -286,20 +307,16 @@ class PageStart(tk.Frame):
         self._local_data_path_cnv = components.DirectoryLabelText(frame, 'local_data_path_cnv',
                                                                   title='Sökväg till lokala cnv-filer:',
                                                                   disabled=True,
-                                                                  # end_with_folders=['data', '<YEAR>', 'raw'],
                                                                   row=r, column=0, **layout)
-
-        r += 1
-        tk.Label(frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=r,
-                                                                                                           column=0,
-                                                                                                           **layout)
 
         r += 1
         listbox_prop = {'bg': '#9deda3'}
         listbox_prop.update(self._listbox_prop)
         self._files_local_cnv = tkw.ListboxSelectionWidget(frame, row=r, column=0,
                                                            count_text='filer',
-                                                           prop=listbox_prop, **layout)
+                                                           prop=listbox_prop,
+                                                           **LISTBOX_TITLES,
+                                                           **layout)
 
         r += 1
         self._button_continue_cnv = tk.Button(frame, text='Skapa standardformat', command=self._callback_continue_cnv)
@@ -319,21 +336,18 @@ class PageStart(tk.Frame):
 
         # Left frame
         self._local_data_path_qc = components.DirectoryLabelText(left_frame, 'local_data_path_qc',
-                                                                  title='Sökväg till lokala nsf-filer:',
+                                                                  title='Sökväg till lokala standardformatfiler:',
                                                                   disabled=True,
                                                                   # end_with_folders=['data', '<YEAR>', 'raw'],
                                                                   row=0, column=0, **layout)
-
-        tk.Label(left_frame, text='Välj filer genom att dubbelklicka', fg='red', font='Helvetica 12 bold').grid(row=1,
-                                                                                                           column=0,
-                                                                                                           **layout)
 
         listbox_prop = {'bg': '#e38484'}
         listbox_prop.update(self._listbox_prop)
         self._files_local_qc = tkw.ListboxSelectionWidget(left_frame, row=2, column=0,
                                                           count_text='filer',
-                                                          prop=listbox_prop, **layout)
-
+                                                          prop=listbox_prop,
+                                                          **LISTBOX_TITLES,
+                                                          **layout)
 
         tkw.grid_configure(left_frame, nr_rows=3, nr_columns=1)
 
@@ -342,33 +356,35 @@ class PageStart(tk.Frame):
         cb = tk.Checkbutton(right_frame, text='Tillåt automatisk granskning samma dag',  variable=self._intvar_allow_automatic_qc_same_day)
         cb.grid(row=0, column=0, padx=5, pady=2, sticky='se')
 
-        self._button_automatic_qc = tk.Button(right_frame, text='Utför automatisk granskning',
+        self._button_automatic_qc = tk.Button(right_frame, text='1) Utför automatisk granskning',
                                               command=self._callback_continue_automatic_qc)
         self._button_automatic_qc.grid(row=1, column=0, padx=5, pady=2, sticky='se')
 
-        self._button_open_manual_qc = tk.Button(right_frame, text='Öppna manuell granskning (alla filer)',
+        self._button_open_manual_qc = tk.Button(right_frame, text='2) Öppna manuell granskning (alla filer)',
                                                 command=self._callback_start_manual_qc)
         self._button_open_manual_qc.grid(row=2, column=0, padx=5, pady=2, sticky='se')
 
-        self._button_close_manual_qc = tk.Button(right_frame, text='Stäng manuell granskning',
+        self._button_close_manual_qc = tk.Button(right_frame, text='3) Stäng manuell granskning',
                                                  command=self._callback_stop_manual_qc)
         self._button_close_manual_qc.grid(row=3, column=0, padx=5, pady=2, sticky='se')
 
         tkw.grid_configure(right_frame, nr_rows=4, nr_columns=1)
 
     def _build_frame_local_nsf(self):
-        frame = self._notebook_local('nsf')
+        frame = self._notebook_local('Standardformat')
         layout = dict(padx=5, pady=2, sticky='nw')
         self._local_data_path_nsf = components.DirectoryLabelText(frame, 'local_data_path_nsf',
-                                                                  title='Sökväg till lokala nsf-filer:',
+                                                                  title='Sökväg till lokala standardformatfiler:',
                                                                   disabled=True,
                                                                   # end_with_folders=['data', '<YEAR>', 'raw'],
                                                                   row=0, column=0, columnspan=2, **layout)
 
-        self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=['Välj', 'Alla'])
+        self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=['Välj', 'Alla'], row=1)
         self._notebook_copy_to_server.select_frame('Alla')
 
-        tkw.grid_configure(frame, nr_rows=2)
+        tk.Button(frame, text='Gå till försystemet', command=self._goto_pre_system).grid(row=2, padx=5, pady=2, sticky='e')
+
+        tkw.grid_configure(frame, nr_rows=3)
 
         frame_all_files = tk.Frame(self._notebook_copy_to_server.frame_alla)
         frame_all_files.grid(row=0, column=0, **layout)
@@ -396,7 +412,7 @@ class PageStart(tk.Frame):
         tkw.grid_configure(frame_all_files, nr_rows=3)
 
         # Frame missing
-        tk.Label(frame_missing_files, text='Filer som ej är på servern').grid(row=0, column=0)
+        tk.Label(frame_missing_files, text='Filer som inte finns på servern').grid(row=0, column=0)
 
         listbox_prop = {'bg': '#f77c7c'}
         listbox_prop.update(self._listbox_prop)
@@ -410,7 +426,7 @@ class PageStart(tk.Frame):
         tkw.grid_configure(frame_missing_files, nr_rows=3)
 
         # Frame not updated
-        tk.Label(frame_not_updated_files, text='Filer som ej är på uppdaterade på servern').grid(row=0, column=0)
+        tk.Label(frame_not_updated_files, text='Filer som inte är updaterade på servern').grid(row=0, column=0)
 
         listbox_prop = {'bg': '#fa8e8e'}
         listbox_prop.update(self._listbox_prop)
@@ -436,8 +452,10 @@ class PageStart(tk.Frame):
         self._button_continue_nsf_select.grid(row=2, column=0, padx=5, pady=2, sticky='s')
         tkw.grid_configure(self._notebook_copy_to_server.frame_valj, nr_rows=2)
 
-    def _callback_continue_automatic_qc(self):
+    def _goto_pre_system(self):
+        self.parent_app.main_app.show_subframe('SHARKtools_pre_system_Svea', 'PageStart')
 
+    def _callback_continue_automatic_qc(self):
         file_names = self._files_local_qc.get_selected()
         if not file_names:
             messagebox.showwarning('Automatisk granskning', 'Inga filer är valda för granskning!')
@@ -458,7 +476,7 @@ class PageStart(tk.Frame):
             nr_files_qc += 1
 
         if not files:
-            messagebox.showwarning('Automatisk granskning', 'Kunde inte hitta standartformatfiler. \nIngen granskning gjord!')
+            messagebox.showwarning('Automatisk granskning', 'Valda filer är redan granskade idag. \nIngen granskning gjord!')
             return
 
         tkw.disable_buttons_in_class(self)
@@ -510,7 +528,7 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.config(state='normal')
         self._button_close_manual_qc.config(bg=self._button_bg_color)
         self._update_files_local_nsf()
-        self._notebook_local.select_frame('nsf')
+        self._notebook_local.select_frame('Standardformat')
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -528,35 +546,29 @@ class PageStart(tk.Frame):
 
     def _callback_copy_all_to_server(self):
         files = self._files_local_nsf_all.get_items()
-        for file in files:
-            handler = file_handler.SBEFileHandler(self.sbe_paths)
-            handler.select_file(file)
-            handler.copy_files_to_server(update=self._overwrite.value)
-        self._update_server_info()
+        self._copy_to_server_and_update(files)
 
     def _callback_copy_missing_to_server(self):
         files = self._files_local_nsf_missing.get_items()
-        for file in files:
-            handler = file_handler.SBEFileHandler(self.sbe_paths)
-            handler.select_file(file)
-            handler.copy_files_to_server(update=self._overwrite.value)
-        self._update_server_info()
+        self._copy_to_server_and_update(files)
 
     def _callback_copy_not_updated_to_server(self):
         files = self._files_local_nsf_not_updated.get_items()
-        for file in files:
-            handler = file_handler.SBEFileHandler(self.sbe_paths)
-            handler.select_file(file)
-            handler.copy_files_to_server(update=self._overwrite.value)
-        self._update_server_info()
+        self._copy_to_server_and_update(files)
 
     def _callback_copy_selected_to_server(self):
         files = self._files_local_nsf_select.get_selected()
+        self._copy_to_server_and_update(files)
+
+    def _copy_to_server_and_update(self, files):
         for file in files:
+            if 'test' in file.name:
+                continue
             handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_file(file)
             handler.copy_files_to_server(update=self._overwrite.value)
         self._update_server_info()
+        self._update_all_local()
 
     def _update_server_info(self):
         self._update_files_local_nsf_not_on_server()
@@ -567,6 +579,14 @@ class PageStart(tk.Frame):
         self._year.value = str(year)
 
     def _callback_continue_source(self):
+
+        if not self._config_path.get():
+            messagebox.showwarning('Kör processering', 'Ingen rotkatalog för ctd_config vald!')
+            return
+
+        if not self._local_data_path_root.get():
+            messagebox.showwarning('Kör processering', 'Ingen rotkatalog för lokal data vald!')
+            return
 
         if not self._platform.value:
             messagebox.showwarning('Kör processering', 'Ingen platform vald!')
@@ -608,7 +628,7 @@ class PageStart(tk.Frame):
                 except file_explorer.seabird.MismatchWarning as e:
                     ans = messagebox.askyesno('Mismatch mellan filer',
                                                 f"""{e.data}
-                                                Om parameter saknas i datcnv bör du fundera på att uppdatera ctd_config. 
+                                                Om parameter saknas i datcnv bör du fundera på att updatera ctd_config. 
                                                 Denna varning kan ignoreras, du får då hantera "problemet" vidare i Seasave. 
                                                 Vill du fortsätta?""")
                     if ans is True:
@@ -672,31 +692,14 @@ class PageStart(tk.Frame):
                                                                      # end_with_folders=['data', '<YEAR>'],
                                                                      row=r, column=c, **layout)
 
-        r += 1
-        self._year = components.YearEntry(frame, 'year', title='År', row=r, column=c, **layout)
-
-        # r += 1
-        # self._server_based_on = components.LabelText(frame, 'server_based_on', title='Visar filer kopplat till:')
-
-        # r += 1
-        # self._server_data_path_raw = components.DirectoryLabelText(frame, 'server_data_path_raw',
-        #                                                            title='Server raw data path:',
-        #                                                            disabled=True,
-        #                                                            # end_with_folders=['data', '<YEAR>', 'raw'], row=r,
-        #                                                            column=c, **layout)
-        #
-        # r += 1
-        # self._server_data_path_cnv = components.DirectoryLabelText(frame, 'server_data_path_cnv',
-        #                                                            title='Server cnv data path:',
-        #                                                            disabled=True,
-        #                                                            # end_with_folders=['data', '<YEAR>', 'cnv'], row=r,
-        #                                                            column=c, **layout)
+        # self._button_update_server = tk.Button(frame, text='Uppdatera',
+        #                                         command=self._update_all_server)
+        # self._button_update_server.grid(row=r, column=c + 1, padx=5, pady=2, sticky='w')
 
         r += 1
         self._server_data_path_nsf = components.DirectoryLabelText(frame, 'server_data_path_nsf',
-                                                                   title='Sökväg till nsf-filer på servern:',
+                                                                   title='Sökväg till standardformatfiler på servern:',
                                                                    disabled=True,
-                                                                   # end_with_folders=['data', '<YEAR>', 'nsf'], row=r,
                                                                    column=c, **layout)
 
         r += 1
@@ -708,7 +711,6 @@ class PageStart(tk.Frame):
                                                row=r, column=c, **layout)
 
         tkw.grid_configure(frame, nr_rows=r+1)
-
 
     def _callback_change_local_source_directory(self, *args):
         """ Called when local source data path is selected """
@@ -750,17 +752,6 @@ class PageStart(tk.Frame):
             return None
         path = Path(self._local_data_path_source.value, selected[-1])
         self.sbe_processing.select_file(path)
-
-    def _update_all_local(self):
-        self._update_files_local_source()
-        self._update_files_local_raw()
-        self._update_files_local_cnv()
-        self._update_files_local_nsf()
-        self._update_files_local_qc()
-        self._update_files_local_nsf_all()
-        self._update_files_local_nsf_selected()
-        self._update_files_local_nsf_not_on_server()
-        self._update_files_local_nsf_not_updated_on_server()
 
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
@@ -875,7 +866,7 @@ class PageStart(tk.Frame):
         self._files_server.update_items(sorted(files))
 
     def _update_server_data_directories(self):
-        # uppdatera filer på servern på ett smartare sätt
+        # updatera filer på servern på ett smartare sätt
         # self._server_data_path_raw.set(path=self.sbe_paths.get_server_directory('raw', default=''))
         # self._server_data_path_cnv.set(path=self.sbe_paths.get_server_directory('cnv', default=''))
         self._server_data_path_nsf.set(path=self.sbe_paths.get_server_directory('nsf', default=''))
@@ -885,9 +876,27 @@ class PageStart(tk.Frame):
         if not year:
             return
         self.sbe_paths.set_year(year)
+        self._callback_change_local_root_directory()
+        self._update_all_server()
+
+    def _update_all_local(self):
+        self._update_files_local_source()
+        self._update_files_local_raw()
+        self._update_files_local_cnv()
+        self._update_files_local_nsf()
+        self._update_files_local_qc()
+        self._update_files_local_nsf_all()
+        self._update_files_local_nsf_selected()
+        self._update_files_local_nsf_not_on_server()
+        self._update_files_local_nsf_not_updated_on_server()
+
+    def _update_all_server(self):
         self._update_server_data_directories()
         self._update_server_file_lists()
-        # self._server_based_on.value = f'Valt år {year}'
+
+    def update_all(self):
+        self._update_all_local()
+        self._update_all_server()
 
 
 

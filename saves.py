@@ -167,7 +167,10 @@ class SaveComponents:
         data = {}
         for comp in self._components_to_store:
             try:
-                data[comp._id] = str(comp.get())
+                value = comp.get()
+                if type(value) != bool:
+                    value = str(value)
+                data[comp._id] = value
                 # print(f'SAVING: {comp._id} - {data[comp._id]}')
             except:
                 pass
