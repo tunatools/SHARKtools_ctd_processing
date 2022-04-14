@@ -16,7 +16,9 @@ from ctd_processing import exceptions
 from ctd_processing import file_handler
 from ctd_processing import standard_format
 from ctd_processing.processing.sbe_processing import SBEProcessing
+from ctd_processing.processing.sbe_processing import SBEPostProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
+import ctd_processing
 from ctd_processing.standard_format import StandardFormatComments
 from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
@@ -54,6 +56,7 @@ class PageStart(tk.Frame):
 
         self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
                                             sbe_processing_paths=self.sbe_processing_paths)
+        self.sbe_post_processing = None
 
         self.bokeh_server = None
 
@@ -222,12 +225,6 @@ class PageStart(tk.Frame):
         # self._button_update.grid(row=2, column=1, padx=5, pady=2, sticky='ne')
 
         tkw.grid_configure(frame, nr_rows=3, nr_columns=2)
-
-    def _update_latest(self):
-        pass
-
-    def _run_latest(self):
-        pass
 
     def _build_frame_local_data(self):
         frame = self._frame_local_data
@@ -562,7 +559,7 @@ class PageStart(tk.Frame):
 
     def _copy_to_server_and_update(self, files):
         for file in files:
-            if 'test' in file.name:
+            if 'test' in file:
                 continue
             handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_file(file)
@@ -607,20 +604,31 @@ class PageStart(tk.Frame):
         self._processed_files = []
 
         for file_name in selected:
+            pack = None
             path = Path(self._local_data_path_source.value, file_name)
             ignore_mismatch = False
             continue_trying = True
             while continue_trying:
                 try:
-                    self.sbe_processing.select_file(path)
-                    new_path = self.sbe_processing.confirm_file(path)
-                    self.sbe_processing_paths.platform = self._platform.value
-                    self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
-                    self.sbe_processing.set_tau_state(self._tau.value)
-                    self.sbe_processing.run_process(overwrite=self._overwrite.value, ignore_mismatch=ignore_mismatch)
-                    self.sbe_processing.create_sensorinfo_file()
-                    self.sbe_processing.create_zip_with_psa_files()
-                    self._processed_files.append(new_path.stem)
+                    pack = ctd_processing.process_sbe_file(path,
+                                                           target_root_directory=self._local_data_path_root.value,
+                                                           config_root_directory=self._config_path.value,
+                                                           platform=self._platform.value,
+                                                           surfacesoak=self._surfacesoak.value,
+                                                           tau=self._tau.value,
+                                                           overwrite=self._overwrite.value,
+                                                           psa_paths=None,
+                                                           )
+                    # self.sbe_processing.select_file(path)
+                    # self.sbe_processing.select_file(path)
+                    # new_path = self.sbe_processing.confirm_file(path)
+                    # self.sbe_processing_paths.platform = self._platform.value
+                    # self.sbe_processing.set_surfacesoak(self._surfacesoak.value)
+                    # self.sbe_processing.set_tau_state(self._tau.value)
+                    # self.sbe_processing.run_process(overwrite=self._overwrite.value, ignore_mismatch=ignore_mismatch)
+                    # self.sbe_processing.create_zip_with_psa_files()
+                    # self.sbe_processing.create_sensorinfo_file()
+                    self._processed_files.append(pack['hex'])
                     continue_trying = False
                 except FileExistsError:
                     messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
@@ -648,8 +656,16 @@ class PageStart(tk.Frame):
         if not cnv_files:
             messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
             return
-        self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
-        self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
+        packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True)
+        new_packs = ctd_processing.create_standard_format_for_packages(packs,
+                                                                       target_root_directory=self._local_data_path_root.value,
+                                                                       config_root_directory=self._config_path.value,
+                                                                       overwrite=self._overwrite.value,
+                                                                       sharkweb_btl_row_file=None)
+
+
+        # self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
+        # self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
         self._update_files_local_qc()
         self._update_files_local_nsf()
         self._update_server_info()
