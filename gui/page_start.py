@@ -604,9 +604,9 @@ class PageStart(tk.Frame):
         self._processed_files = []
 
         for file_name in selected:
-            pack = None
             path = Path(self._local_data_path_source.value, file_name)
             ignore_mismatch = False
+            try_fixing_mismatch = False
             continue_trying = True
             while continue_trying:
                 try:
@@ -618,6 +618,8 @@ class PageStart(tk.Frame):
                                                            tau=self._tau.value,
                                                            overwrite=self._overwrite.value,
                                                            psa_paths=None,
+                                                           ignore_mismatch=ignore_mismatch,
+                                                           try_fixing_mismatch=try_fixing_mismatch,
                                                            )
                     # self.sbe_processing.select_file(path)
                     # self.sbe_processing.select_file(path)
@@ -634,12 +636,17 @@ class PageStart(tk.Frame):
                     messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
                     return
                 except file_explorer.seabird.MismatchWarning as e:
-                    ans = messagebox.askyesno('Mismatch mellan filer',
-                                                f"""{e.data}
-                                                Om parameter saknas i datcnv bör du fundera på att updatera ctd_config. 
-                                                Denna varning kan ignoreras, du får då hantera "problemet" vidare i Seasave. 
-                                                Vill du fortsätta?""")
+                    # ans = messagebox.askyesno('Mismatch mellan filer',
+                    #                                 f"""{e.data}
+                    #                                                 Om parameter saknas i datcnv bör du fundera på att updatera ctd_config.
+                    #                                                 Denna varning kan ignoreras, du får då hantera "problemet" vidare i Seasave.
+                    #                                                 Vill du fortsätta?""")
+                    ans = messagebox.askyesnocancel('Mismatch mellan filer',
+                                                f"""{e.data}\n\n
+                                                Välj "Ja" för att försöka lösa problemet. \nVälj "Nej" för att lösa problemet i seabird programvara. \nVälj "Avbryt" för att avbryta. """)
                     if ans is True:
+                        try_fixing_mismatch = True
+                    elif ans is False:
                         ignore_mismatch = True
                     else:
                         return

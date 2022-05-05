@@ -15,6 +15,7 @@ from plugins.plugin_app import PluginApp
 
 ALL_PAGES = dict()
 ALL_PAGES['PageStart'] = gui.PageStart
+ALL_PAGES['PageInspect'] = gui.PageInspect
 
 APP_TO_PAGE = dict()
 for page_name, page in ALL_PAGES.items():
@@ -70,7 +71,7 @@ class App(PluginApp):
         self.startup_pages()
 
         self.page_history = ['PageUser']
-        self.show_frame('PageStart')
+        # self.show_frame('PageStart')
 
         self.update_all()
 
@@ -149,10 +150,8 @@ class App(PluginApp):
         self.update()
 
 
-
     #===========================================================================
     def goto_previous_page(self, event):
-        self.page_history
         if self.previous_page:
             self.show_frame(self.previous_page) 
         

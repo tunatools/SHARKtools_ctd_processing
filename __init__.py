@@ -7,7 +7,11 @@ from .app import App
 
 INFO = dict(title='CTD Processing',
             users_directory='users',
-            sub_pages=[],
+            sub_pages=[dict(name='PageStart',
+                            title='CTD-processering'),
+                       dict(name='PageInspect',
+                            title='Inspektera och behandla')
+                       ],
             user_page_class='PageUser')  # Must match name in ALL_PAGES in main app
 
 USER_SETTINGS = []
