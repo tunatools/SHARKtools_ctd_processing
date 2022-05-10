@@ -32,6 +32,11 @@ from ..events import subscribe
 from ..saves import SaveComponents
 from ..utils import get_files_in_directory
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka',
                                        fg='red',
@@ -601,7 +606,7 @@ class PageStart(tk.Frame):
         local_root = self._local_data_path_root.value
         self.sbe_paths.set_local_root_directory(local_root)
 
-        self._processed_files = []
+        processed_files = []
 
         for file_name in selected:
             path = Path(self._local_data_path_source.value, file_name)
@@ -630,7 +635,7 @@ class PageStart(tk.Frame):
                     # self.sbe_processing.run_process(overwrite=self._overwrite.value, ignore_mismatch=ignore_mismatch)
                     # self.sbe_processing.create_zip_with_psa_files()
                     # self.sbe_processing.create_sensorinfo_file()
-                    self._processed_files.append(pack['hex'])
+                    processed_files.append(pack['hex'])
                     continue_trying = False
                 except FileExistsError:
                     messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
@@ -654,7 +659,8 @@ class PageStart(tk.Frame):
                     messagebox.showerror('Något gick fel', traceback.format_exc())
                     raise
 
-        self._update_local_file_lists()
+        self._processed_files = [path.stem for path in processed_files]
+        self._update_files_local_cnv()
         self._notebook_local.select_frame('cnv')
 
     def _callback_continue_cnv(self):
@@ -803,19 +809,20 @@ class PageStart(tk.Frame):
             name, suffix = item.split('.')
             all_cnv_files[name] = item
         select_files = [all_cnv_files.get(name) for name in self._processed_files if all_cnv_files.get(name)]
+        logger.debug(f'select_files: {select_files}')
         self._files_local_cnv.move_items_to_selected(select_files)
 
     def _update_files_local_qc(self):
         files = get_files_in_directory(self._local_data_path_qc.value)
         self._files_local_qc.update_items(files)
         self._files_local_qc.deselect_all()
-        all_cnv_files = {}
+        all_txt_files = {}
         for item in self._files_local_qc.get_all_items():
             if not item.endswith('.txt'):
                 continue
             name, suffix = item.split('.')
-            all_cnv_files[name] = item
-        select_files = [all_cnv_files.get(name) for name in self._converted_files if all_cnv_files.get(name)]
+            all_txt_files[name] = item
+        select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
         self._files_local_qc.move_items_to_selected(select_files)
 
     def _update_files_local_nsf(self):
