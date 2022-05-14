@@ -664,28 +664,34 @@ class PageStart(tk.Frame):
         self._notebook_local.select_frame('cnv')
 
     def _callback_continue_cnv(self):
-        self._converted_files = []
-        cnv_files = self._get_selected_local_cnv_file_paths()
-        if not cnv_files:
-            messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
-            return
-        packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True)
-        new_packs = ctd_processing.create_standard_format_for_packages(packs,
-                                                                       target_root_directory=self._local_data_path_root.value,
-                                                                       config_root_directory=self._config_path.value,
-                                                                       overwrite=self._overwrite.value,
-                                                                       sharkweb_btl_row_file=None)
+        try:
+            self._converted_files = []
+            cnv_files = self._get_selected_local_cnv_file_paths()
+            if not cnv_files:
+                messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
+                return
+            packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True)
+            new_packs = ctd_processing.create_standard_format_for_packages(packs,
+                                                                           target_root_directory=self._local_data_path_root.value,
+                                                                           config_root_directory=self._config_path.value,
+                                                                           overwrite=self._overwrite.value,
+                                                                           sharkweb_btl_row_file=None)
 
 
-        # self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
-        # self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
-        self._update_files_local_qc()
-        self._update_files_local_nsf()
-        self._update_server_info()
+            # self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
+            # self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
+            self._update_files_local_qc()
+            self._update_files_local_nsf()
+            self._update_server_info()
 
-        self._converted_files = [path.stem for path in cnv_files]
-        self._update_files_local_qc()
-        self._notebook_local.select_frame('Granskning')
+            self._converted_files = [path.stem for path in cnv_files]
+            self._update_files_local_qc()
+            self._notebook_local.select_frame('Granskning')
+        except PermissionError as e:
+            messagebox.showerror('Skapa standardformat',
+                                 f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
+        except Exception:
+            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
 
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
