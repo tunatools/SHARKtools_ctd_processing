@@ -18,6 +18,7 @@ class EventTypes:
                             'change_server_data_path_root',
                             'change_tau',
                             'change_overwrite',
+                            'change_simple_old_key',
                             'update_series_local_source',
                             'change_local_data_path_raw',
                             'change_year']

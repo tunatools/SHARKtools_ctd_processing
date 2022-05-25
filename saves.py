@@ -176,9 +176,12 @@ class SaveComponents:
                 pass
         self._saves.set(self._saves_id_key, data)
 
-    def load(self):
+    def load(self, component=False):
         data = self._saves.get(self._saves_id_key)
-        for comp in self._components_to_store:
+        components = self._components_to_store
+        if component:
+            components = [component]
+        for comp in components:
             try:
                 item = self._defaults.get(comp._id, None)
                 if item is None:

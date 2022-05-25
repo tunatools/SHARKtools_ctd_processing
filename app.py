@@ -16,6 +16,7 @@ from plugins.plugin_app import PluginApp
 ALL_PAGES = dict()
 ALL_PAGES['PageStart'] = gui.PageStart
 ALL_PAGES['PageInspect'] = gui.PageInspect
+ALL_PAGES['PageSimple'] = gui.PageSimple
 
 APP_TO_PAGE = dict()
 for page_name, page in ALL_PAGES.items():

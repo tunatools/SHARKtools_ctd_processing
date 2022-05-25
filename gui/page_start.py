@@ -225,6 +225,9 @@ class PageStart(tk.Frame):
 
         self._year = components.YearEntry(frame, 'year', title='År', row=2, column=1, **layout)
 
+        self._old_key = components.Checkbutton(frame, 'old_key', title='Använd gammalt filnamn', row=3, column=0,
+                                                 **layout)
+
         # self._button_update = tk.Button(frame, text='Uppdatera mappinnehåll mm.',
         #                                  command=self._update_all_local)
         # self._button_update.grid(row=2, column=1, padx=5, pady=2, sticky='ne')
@@ -518,7 +521,8 @@ class PageStart(tk.Frame):
         self._button_open_manual_qc.config(state='disabled')
         self._button_automatic_qc.config(state='disabled')
         self._button_close_manual_qc.config(bg='red')
-        self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'))
+        self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'),
+                                  visualize_setting='smhi_expedition_vis')
         self.bokeh_server.start()
 
     def _callback_stop_manual_qc(self):
@@ -625,6 +629,7 @@ class PageStart(tk.Frame):
                                                            psa_paths=None,
                                                            ignore_mismatch=ignore_mismatch,
                                                            try_fixing_mismatch=try_fixing_mismatch,
+                                                           old_key=self._old_key.value
                                                            )
                     # self.sbe_processing.select_file(path)
                     # self.sbe_processing.select_file(path)
@@ -670,12 +675,13 @@ class PageStart(tk.Frame):
             if not cnv_files:
                 messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
                 return
-            packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True)
+            packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True, old_key=self._old_key.value)
             new_packs = ctd_processing.create_standard_format_for_packages(packs,
                                                                            target_root_directory=self._local_data_path_root.value,
                                                                            config_root_directory=self._config_path.value,
                                                                            overwrite=self._overwrite.value,
-                                                                           sharkweb_btl_row_file=None)
+                                                                           sharkweb_btl_row_file=None,
+                                                                           old_key=self._old_key.value)
 
 
             # self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
@@ -692,6 +698,7 @@ class PageStart(tk.Frame):
                                  f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
         except Exception:
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
+            raise
 
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
@@ -790,10 +797,15 @@ class PageStart(tk.Frame):
 
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
+        if not self._local_data_path_source.value:
+            self._files_local_source.update_items()
+            self._local_data_path_source.value = ''
+            return
+            
         path = Path(self._local_data_path_source.value)
         if not path.exists():
             self._files_local_source.update_items()
-            self._local_data_path_source = ''
+            self._local_data_path_source.value = ''
             return
             # raise FileNotFoundError(path)
         # files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
