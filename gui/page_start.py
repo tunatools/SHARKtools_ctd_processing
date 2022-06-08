@@ -3,7 +3,8 @@
 #
 # Copyright (c) 2018 SMHI, Swedish Meteorological and Hydrological Institute
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
-
+import json
+import logging
 import shutil
 import time
 import tkinter as tk
@@ -11,19 +12,18 @@ import traceback
 from pathlib import Path
 from tkinter import messagebox
 
+import ctd_processing
 import file_explorer
 from ctd_processing import exceptions
 from ctd_processing import file_handler
-from ctd_processing import standard_format
 from ctd_processing.processing.sbe_processing import SBEProcessing
-from ctd_processing.processing.sbe_processing import SBEPostProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
-import ctd_processing
 from ctd_processing.standard_format import StandardFormatComments
 from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
+from sharkpylib import ftp
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 
@@ -31,9 +31,6 @@ from . import components
 from ..events import subscribe
 from ..saves import SaveComponents
 from ..utils import get_files_in_directory
-
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +86,7 @@ class PageStart(tk.Frame):
                                       self._platform,
                                       self._overwrite,
                                       self._year,
+                                      self._ftp_credentials_path,
         )
 
         self._save_obj.load()
@@ -246,7 +244,7 @@ class PageStart(tk.Frame):
         self._button_update.grid(row=0, column=1, padx=5, pady=2, sticky='ne')
 
         self._notebook_local = tkw.NotebookWidget(frame, 
-                                                  frames=['Börja här', 'raw', 'cnv', 'Granskning', 'Standardformat'],
+                                                  frames=['Börja här', 'raw', 'cnv', 'Granskning', 'Standardformat', 'ftp'],
                                                   row=1, column=0, columnspan=2, **layout)
 
         tkw.grid_configure(frame, nr_rows=2)
@@ -256,6 +254,7 @@ class PageStart(tk.Frame):
         self._build_frame_local_cnv()
         self._build_frame_local_qc()
         self._build_frame_local_nsf()
+        self._build_frame_local_ftp()
 
     def _build_frame_local_source(self):
         frame = self._notebook_local('Börja här')
@@ -456,6 +455,34 @@ class PageStart(tk.Frame):
                                                      command=self._callback_copy_selected_to_server)
         self._button_continue_nsf_select.grid(row=2, column=0, padx=5, pady=2, sticky='s')
         tkw.grid_configure(self._notebook_copy_to_server.frame_valj, nr_rows=2)
+
+    def _build_frame_local_ftp(self):
+        frame = self._notebook_local('ftp')
+        layout = dict(padx=5, pady=2, sticky='nw')
+        r = 0
+        self._local_data_path_ftp = components.DirectoryLabelText(frame, 'local_data_path_ftp',
+                                                                  title='Sökväg till lokala standardformatfiler:',
+                                                                  disabled=True,
+                                                                  row=r, column=0, **layout)
+
+        r += 1
+        listbox_prop = {'bg': '#fcec03'}
+        listbox_prop.update(self._listbox_prop)
+        self._files_local_ftp = tkw.ListboxSelectionWidget(frame, row=r, column=0,
+                                                           count_text='filer',
+                                                           prop=listbox_prop,
+                                                           **LISTBOX_TITLES,
+                                                           **layout)
+
+        r += 1
+        self._ftp_credentials_path = components.FilePathButtonText(frame, 'ftp_credentials_path',
+                                                                      title='Sökväg till inloggningsuppgifter till FTP',
+                                                                      row=r, column=0, **layout)
+
+        self._button_send_files_via_ftp = tk.Button(frame, text='Skicka filer via ftp', command=self._callback_continue_ftp)
+        self._button_send_files_via_ftp.grid(row=r, column=1, padx=5, pady=2, sticky='se')
+
+        tkw.grid_configure(frame, nr_rows=r + 1)
 
     def _goto_pre_system(self):
         self.parent_app.main_app.show_subframe('SHARKtools_pre_system_Svea', 'PageStart')
@@ -700,6 +727,29 @@ class PageStart(tk.Frame):
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
             raise
 
+    def _callback_continue_ftp(self):
+
+        cred_path = self._ftp_credentials_path.get()
+        if not cred_path or not cred_path.exists():
+            messagebox.showwarning('Skicka till FTP', 'Sökvägen till inloggningsuppgifter saknas eller är fel!')
+            return
+
+        with open(cred_path) as fid:
+            cred = json.load(fid)
+
+        files = self._files_local_ftp.get_selected()
+        if not files:
+            messagebox.showwarning('Skicka till FTP', 'Inga filer valda att skicka till ftp!')
+            return
+
+        directory = self._local_data_path_ftp.get()
+        paths = [Path(directory, file) for file in files]
+        obj = ftp.Ftp(**cred)
+        obj.change_directory('test')
+        obj.add_files_to_send(*paths)
+        obj.send_files()
+        messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp')
+
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
         if not files:
@@ -846,12 +896,26 @@ class PageStart(tk.Frame):
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_selected()
+        self._update_files_local_ftp()
         if self.sbe_paths.get_server_directory('root'):
             self._update_files_local_nsf_not_on_server()
 
+    def _update_files_local_ftp(self):
+        files = get_files_in_directory(self._local_data_path_qc.value)
+        self._files_local_ftp.update_items(files)
+        self._files_local_ftp.deselect_all()
+        all_txt_files = {}
+        for item in self._files_local_ftp.get_all_items():
+            if not item.endswith('.txt'):
+                continue
+            name, suffix = item.split('.')
+            all_txt_files[name] = item
+        select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
+        self._files_local_ftp.move_items_to_selected(select_files)
+
     def _update_files_local_nsf_all(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
-        self._files_local_nsf_all.update_items(files)
+        self._files_local_nsf_all.update_items(files[:])
 
     def _update_files_local_nsf_not_on_server(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
@@ -900,6 +964,7 @@ class PageStart(tk.Frame):
         self._local_data_path_cnv.set(path=self.sbe_paths.get_local_directory('cnv'))
         self._local_data_path_qc.set(path=self.sbe_paths.get_local_directory('nsf'))
         self._local_data_path_nsf.set(path=self.sbe_paths.get_local_directory('nsf'))
+        self._local_data_path_ftp.set(path=self.sbe_paths.get_local_directory('nsf'))
 
     def _update_server_file_lists(self):
         """Updates server file list based on files found in path: self._server_data_path_nsf"""

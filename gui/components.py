@@ -233,12 +233,6 @@ class ButtonText(tk.Frame):
 
 class DirectoryButtonText(tk.Frame):
 
-    # def __init__(self, *args, **kwargs):
-    #     self._end_with_folders_original = kwargs.pop('end_with_folders', [])
-    #     self._end_with_folders = self._end_with_folders_original[:]
-    #     self._root_folder = None
-    #     super().__init__(*args, **kwargs)
-
     def __init__(self,
                  parent,
                  id,
@@ -335,6 +329,77 @@ class DirectoryButtonText(tk.Frame):
         if year:
             self._fix_ends_with_folders(year)
         path = self._fix_path(path)
+        self.value = path
+
+
+class FilePathButtonText(tk.Frame):
+
+    def __init__(self,
+                 parent,
+                 id,
+                 title='FilePathButtonText',
+                 **kwargs):
+
+        self.grid_frame = {'padx': 5,
+                           'pady': 5,
+                           'sticky': 'nsew'}
+
+        self._id = id
+        self.title = title
+        self._hard_press = kwargs.pop('hard_press', False)
+
+        self.grid_frame.update(kwargs)
+        super().__init__(parent)
+        self.grid(**self.grid_frame)
+
+        self._create_frame()
+
+    def _create_frame(self):
+        self._stringvar = tk.StringVar()
+        self.button = tk.Button(self, text=self.title, command=self._on_button_click)
+        self.button.grid(column=0, row=0, padx=5, pady=5, sticky='nw')
+        tk.Label(self, textvariable=self._stringvar).grid(column=1, row=0, padx=5, pady=5, sticky='nw')
+        if self._hard_press:
+            self.button.bind('<Control-Button-1>', self._on_button_click_hard)
+
+    def _open_dialog(self):
+        path = filedialog.askopenfilename()
+        if not path:
+            return
+        path = Path(path)
+
+        self._stringvar.set(str(path))
+        post_event(f'change_{self._id}', path)
+
+    def _on_button_click(self):
+        if self._hard_press:
+            return
+        self._open_dialog()
+
+    def _on_button_click_hard(self, event):
+        self._open_dialog()
+
+    @property
+    def value(self):
+        string = self._stringvar.get()
+        if not string:
+            return False
+        return Path(string)
+
+    @value.setter
+    def value(self, item):
+        if not item:
+            self._stringvar.set('')
+        else:
+            self._stringvar.set(str(item))
+
+    def get(self):
+        return self.value
+
+    def set(self, path=None):
+        if not path:
+            return
+        path = Path(path)
         self.value = path
 
 
