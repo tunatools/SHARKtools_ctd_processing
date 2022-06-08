@@ -463,26 +463,39 @@ class PageStart(tk.Frame):
         self._local_data_path_ftp = components.DirectoryLabelText(frame, 'local_data_path_ftp',
                                                                   title='Sökväg till lokala standardformatfiler:',
                                                                   disabled=True,
-                                                                  row=r, column=0, **layout)
+                                                                  row=r, column=0,
+                                                                  columnspan=2, **layout)
 
         r += 1
         listbox_prop = {'bg': '#fcec03'}
         listbox_prop.update(self._listbox_prop)
         self._files_local_ftp = tkw.ListboxSelectionWidget(frame, row=r, column=0,
+                                                           columnspan=2,
                                                            count_text='filer',
                                                            prop=listbox_prop,
                                                            **LISTBOX_TITLES,
                                                            **layout)
+
+        self._files_on_ftp = tkw.ListboxWidget(frame, row=r, column=2,
+                                               prop_listbox=listbox_prop,
+                                               include_delete_button=False,
+                                               padx=5, pady=2, sticky='e')
 
         r += 1
         self._ftp_credentials_path = components.FilePathButtonText(frame, 'ftp_credentials_path',
                                                                       title='Sökväg till inloggningsuppgifter till FTP',
                                                                       row=r, column=0, **layout)
 
-        self._button_send_files_via_ftp = tk.Button(frame, text='Skicka filer via ftp', command=self._callback_continue_ftp)
-        self._button_send_files_via_ftp.grid(row=r, column=1, padx=5, pady=2, sticky='se')
+        self._ftp_test_checkbutton = tkw.CheckbuttonWidgetSingle(frame, name='Skicka till test',
+                                                                 callback=self._on_toggle_ftp_test, row=r, column=1)
 
-        tkw.grid_configure(frame, nr_rows=r + 1)
+        self._button_send_files_via_ftp = tk.Button(frame, text='Skicka filer via ftp', command=self._callback_continue_ftp)
+        self._button_send_files_via_ftp.grid(row=r, column=2, padx=5, pady=2, sticky='se')
+
+        tkw.grid_configure(frame, nr_rows=r + 1, nr_columns=3)
+
+    def _on_toggle_ftp_test(self):
+        self._update_files_ftp()
 
     def _goto_pre_system(self):
         self.parent_app.main_app.show_subframe('SHARKtools_pre_system_Svea', 'PageStart')
@@ -729,13 +742,10 @@ class PageStart(tk.Frame):
 
     def _callback_continue_ftp(self):
 
-        cred_path = self._ftp_credentials_path.get()
-        if not cred_path or not cred_path.exists():
+        cred = self.ftp_credentials
+        if not cred:
             messagebox.showwarning('Skicka till FTP', 'Sökvägen till inloggningsuppgifter saknas eller är fel!')
             return
-
-        with open(cred_path) as fid:
-            cred = json.load(fid)
 
         files = self._files_local_ftp.get_selected()
         if not files:
@@ -744,11 +754,25 @@ class PageStart(tk.Frame):
 
         directory = self._local_data_path_ftp.get()
         paths = [Path(directory, file) for file in files]
-        obj = ftp.Ftp(**cred)
-        obj.change_directory('test')
+        obj = get_ftp_object(cred)
         obj.add_files_to_send(*paths)
         obj.send_files()
-        messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp')
+        if self._ftp_test_checkbutton.get():
+            messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp (testmapp)')
+        else:
+            messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp')
+        self._files_local_ftp.deselect_all()
+        self._update_files_ftp()
+
+    @property
+    def ftp_credentials(self):
+        cred_path = self._ftp_credentials_path.get()
+        if not cred_path or not cred_path.exists():
+            return {}
+        with open(cred_path) as fid:
+            cred = json.load(fid)
+        cred['test'] = bool(self._ftp_test_checkbutton.get())
+        return cred
 
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
@@ -912,6 +936,16 @@ class PageStart(tk.Frame):
             all_txt_files[name] = item
         select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
         self._files_local_ftp.move_items_to_selected(select_files)
+        self._update_files_ftp()
+
+    def _update_files_ftp(self):
+        self._files_on_ftp.update_items()
+        cred = self.ftp_credentials
+        if not cred:
+            return
+        obj = get_ftp_object(cred)
+        file_list = obj.server_files[:]
+        self._files_on_ftp.update_items(file_list)
 
     def _update_files_local_nsf_all(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
@@ -1010,6 +1044,14 @@ class PageStart(tk.Frame):
     def update_all(self):
         self._update_all_local()
         self._update_all_server()
+
+
+def get_ftp_object(credentials):
+    test = credentials.pop('test', True)
+    obj = ftp.Ftp(**credentials)
+    if test:
+        obj.change_directory('test')
+    return obj
 
 
 
