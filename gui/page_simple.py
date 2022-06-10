@@ -22,6 +22,7 @@ from sharkpylib.tklib import tkinter_widgets as tkw
 import logging
 
 from . import components
+from . import frames
 from ..events import subscribe
 from ..saves import SaveComponents
 from ..utils import get_files_in_directory
@@ -56,7 +57,7 @@ class PageSimple(tk.Frame):
 
         self._unprocessed_packs = {}
         self._active_keys = []
-        self._active_keys_mapping = {}
+        # self._active_keys_mapping = {}
 
         self._button_bg_color = None
         self._yes_color = '#00e025'
@@ -104,36 +105,60 @@ class PageSimple(tk.Frame):
 
     def close(self):
         self._close_manual_qc()
+        self._ftp_frame.close()
         self._save_obj.save()
 
     def _update_lists(self):
         self._callback_change_config_path()
         self._callback_select_platform()
         self._update_surfacesaok_list()
-        
+
     def _build_frame(self):
         layout = dict(padx=20,
                       pady=20,
                       sticky='nsew')
 
         self._frame_paths = tk.LabelFrame(self, text='Sökvägar')
-        self._frame_paths.grid(row=0, column=0, columnspan=3, **layout)
+        self._frame_paths.grid(row=0, column=0, **layout)
 
-        self._frame_options = tk.LabelFrame(self, text='Val')
-        self._frame_options.grid(row=1, column=0, **layout)
+        self._notebook = tkw.NotebookWidget(self, frames=['Processering', 'Skicka via FTP'], row=1, column=0, **layout)
 
-        self._frame_files = tk.LabelFrame(self, text='Filer i källmappen')
-        self._frame_files.grid(row=1, column=1, **layout)
+        tkw.grid_configure(self, nr_rows=2)
 
-        self._frame_actions = tk.LabelFrame(self, text='Vad vill du göra?')
-        self._frame_actions.grid(row=1, column=2, **layout)
+        self._build_processing_frame()
+        self._build_ftp_frame()
 
-        tkw.grid_configure(self, nr_rows=2, nr_columns=3)
+    def _build_processing_frame(self):
+        frame = self._notebook.get_frame('Processering')
+        layout = dict(padx=20,
+                      pady=20,
+                      sticky='nsew')
+
+        self._frame_options = tk.LabelFrame(frame, text='Val')
+        self._frame_options.grid(row=0, column=0, **layout)
+
+        self._frame_files = tk.LabelFrame(frame, text='Filer i källmappen')
+        self._frame_files.grid(row=0, column=1, **layout)
+
+        self._frame_actions = tk.LabelFrame(frame, text='Vad vill du göra?')
+        self._frame_actions.grid(row=0, column=2, **layout)
+
+        tkw.grid_configure(frame, nr_rows=1, nr_columns=3)
 
         self._build_frame_path()
         self._build_frame_options()
         self._build_frame_files()
         self._build_frame_actions()
+
+    def _build_ftp_frame(self):
+        frame = self._notebook.get_frame('Skicka via FTP')
+        layout = dict(padx=20,
+                      pady=20,
+                      sticky='nsew')
+        self._ftp_frame = frames.FtpFrame(frame, sbe_paths=self.sbe_paths)
+        self._ftp_frame.grid(row=0, column=0, **layout)
+
+        tkw.grid_configure(frame)
 
     def _build_frame_path(self):
         layout = dict(padx=5,
@@ -284,14 +309,65 @@ class PageSimple(tk.Frame):
         if not all_keys:
             messagebox.showwarning('Kör processering', 'Ingen filer är valda för processering!')
             return
-        
+
         self._button_run.configure(state='disable')
-        
+
         self._process_files()
         self._create_standard_format()
+        self._update_ftp_frame()
+        self._preform_automatic_qc()
         self._open_manual_qc()
 
     def _process_files(self):
+        self._active_ids = []
+        local_root = self._local_data_path_root.value
+        server_root = self._server_data_path_root.value
+        self.sbe_paths.set_local_root_directory(local_root)
+        self.sbe_paths.set_server_root_directory(server_root)
+
+        active_patterns = self._files_source.get_selected()
+        self._active_ids = [self._source_patterns_to_id[pat] for pat in active_patterns]
+        active_paths = [pack.path('hex') for _id, pack in self._id_to_source_pack.items() if _id in self._active_ids]
+
+        for path in active_paths:
+            ignore_mismatch = False
+            try_fixing_mismatch = False
+            continue_trying = True
+            while continue_trying:
+                try:
+                    pack = ctd_processing.process_sbe_file(path,
+                                                           target_root_directory=self._local_data_path_root.value,
+                                                           config_root_directory=self._config_path.value,
+                                                           platform=self._platform.value,
+                                                           surfacesoak=self._surfacesoak.value,
+                                                           tau=self._tau.value,
+                                                           psa_paths=None,
+                                                           ignore_mismatch=ignore_mismatch,
+                                                           try_fixing_mismatch=try_fixing_mismatch,
+                                                           old_key=self._old_key.value
+                                                           )
+                    continue_trying = False
+                except FileExistsError:
+                    messagebox.showerror('File exists',
+                                         f'Could not overwrite file. Select overwrite and try again.\n{path}')
+                    return
+                except file_explorer.seabird.MismatchWarning as e:
+                    ans = messagebox.askyesnocancel('Mismatch mellan filer',
+                                                    f"""{e.data}\n\n
+                                                Välj "Ja" för att försöka lösa problemet. \nVälj "Nej" för att lösa problemet i seabird programvara. \nVälj "Avbryt" för att avbryta. """)
+                    if ans is True:
+                        try_fixing_mismatch = True
+                    elif ans is False:
+                        ignore_mismatch = True
+                    else:
+                        return
+                except Exception as e:
+                    messagebox.showerror('Något gick fel', traceback.format_exc())
+                    raise
+                finally:
+                    self._button_run.configure(state='normal')
+
+    def old_process_files(self):
         self._active_keys = []
         local_root = self._local_data_path_root.value
         server_root = self._server_data_path_root.value
@@ -340,6 +416,30 @@ class PageSimple(tk.Frame):
 
     def _create_standard_format(self):
         try:
+            all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'),
+                                                                with_id_as_key=True, old_key=self._old_key.value)
+            packs = []
+            for _id in self._active_ids:
+                pack = all_packs.get(_id)
+                if not pack:
+                    continue
+                packs.append(pack)
+            if not packs:
+                messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
+                return
+            new_packs = ctd_processing.create_standard_format_for_packages(packs,
+                                                                           target_root_directory=self._local_data_path_root.value,
+                                                                           config_root_directory=self._config_path.value,
+                                                                           sharkweb_btl_row_file=None,
+                                                                           old_key=self._old_key.value)
+        except PermissionError as e:
+            messagebox.showerror('Skapa standardformat',
+                                 f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
+        except Exception:
+            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
+
+    def old_create_standard_format(self):
+        try:
             all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'), with_new_key=True, old_key=self._old_key.value)
             packs = []
             for key in self._active_keys:
@@ -360,8 +460,45 @@ class PageSimple(tk.Frame):
                                  f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
         except Exception:
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
-            
-    def preform_automatic_qc(self):
+
+    def _preform_automatic_qc(self):
+        all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
+                                                            with_id_as_key=True, old_key=self._old_key.value)
+        print(all_packs.keys())
+        print(self._active_ids)
+        files = [pack['txt'] for key, pack in all_packs.items() if key in self._active_ids]
+        if not files:
+            messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
+            return
+
+        tkw.disable_buttons_in_class(self)
+        try:
+            session = ctdpy_session.Session(filepaths=files,
+                                            reader='ctd_stdfmt')
+
+            datasets = session.read()
+
+            for data_key, item in datasets[0].items():
+                parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
+                qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
+                qc_run()
+
+            data_path = session.save_data(datasets,
+                                          writer='ctd_standard_template', return_data_path=True,
+                                          save_path=self.sbe_paths.get_local_directory('temp'),
+                                          )
+
+            # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
+            data_path = Path(data_path)
+            time.sleep(.5)
+            for source_path in Path(data_path).iterdir():
+                target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
+                shutil.copyfile(source_path, target_path)
+            return data_path
+        except Exception:
+            messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+
+    def old_preform_automatic_qc(self):
         all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
                                                             with_new_key=True, old_key=self._old_key.value)
         files = [pack['txt'] for key, pack in all_packs.items() if key in self._active_keys]
@@ -397,12 +534,14 @@ class PageSimple(tk.Frame):
             messagebox.showwarning('Automatisk granskning', traceback.format_exc())
 
     def _open_manual_qc(self):
+        tkw.enable_buttons_in_class(self)
         self._button_run.config(state='disabled')
         self._button_open_qc.config(state='disabled')
         self._button_close_qc.config(bg=self._no_color)
         self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'),
                                   visualize_setting='smhi_expedition_vis')
         self.bokeh_server.start()
+        # self._button_close_qc.config(state='normal')
 
     def _close_manual_qc(self):
         if not self.bokeh_server:
@@ -413,21 +552,90 @@ class PageSimple(tk.Frame):
         self._button_open_qc.config(state='normal')
         self._button_close_qc.config(bg=self._button_bg_color)
         self._copy_files_to_server()
-        self._copy_files_to_ftp()
         self._update_files()
+        self._notebook.select_frame('Skicka via FTP')
 
     def _copy_files_to_server(self):
-        for stem in self._active_keys_mapping.values():
-            if 'test' in stem:
+        local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), with_id_as_key=True,
+                                                              old_key=self._old_key.value, exclude_directory='temp')
+        print('_active_ids', self._active_ids)
+        print('local_packs', local_packs.keys())
+        for _id in self._active_ids:
+            pack = local_packs.get(_id)
+            if not pack:
+                messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inge filer att kopiera...')
+                return
+            if 'test' in pack.pattern:
                 continue
             handler = file_handler.SBEFileHandler(self.sbe_paths)
-            handler.select_stem(stem)
+            handler.select_pack(pack)
             handler.copy_files_to_server()
 
-    def _copy_files_to_ftp(self):
-        pass
-
     def _update_files(self, data=None):
+        tkw.disable_buttons_in_class(self)
+        # self._button_run.configure(state='disable')
+        self._button_run.update_idletasks()
+        self._active_ids = []
+        self._files_source.update_items([])
+
+        source_dir = self._local_data_path_source.value
+        local_dir = self._local_data_path_root.value
+        server_dir = self._server_data_path_root.value
+
+        self.sbe_paths.set_local_root_directory(local_dir)
+        self.sbe_paths.set_server_root_directory(server_dir)
+
+        if not all([source_dir, local_dir, server_dir]):
+            return
+        source_packs = file_explorer.get_packages_in_directory(source_dir, with_id_as_key=True,
+                                                               old_key=self._old_key.value, exclude_directory='temp')
+        local_packs = file_explorer.get_packages_in_directory(local_dir, with_id_as_key=True,
+                                                              old_key=self._old_key.value, exclude_directory='temp')
+        server_packs = file_explorer.get_packages_in_directory(server_dir, with_id_as_key=True,
+                                                               old_key=self._old_key.value, exclude_directory='temp')
+
+        nr_packs_total = len(source_packs)
+        nr_packs_not_local = 0
+        nr_packs_not_server = 0
+        unprocessed_keys = []
+        for key in source_packs:
+            if key not in local_packs:
+                nr_packs_not_local += 1
+            if key not in server_packs:
+                nr_packs_not_server += 1
+            if key not in local_packs and key not in server_packs:
+                unprocessed_keys.append(key)
+
+        self._stringvar_nr_packs_tot.set(nr_packs_total)
+        self._stringvar_nr_packs_missing_local.set(nr_packs_not_local)
+        self._stringvar_nr_packs_missing_server.set(nr_packs_not_server)
+
+        self._source_patterns_to_id = {}
+        self._id_to_source_pack = {}
+        self._source_patterns_to_pack = {}
+        for _id, pack in source_packs.items():
+            if _id not in unprocessed_keys:
+                continue
+            self._id_to_source_pack[_id] = pack
+            self._source_patterns_to_pack[pack.pattern] = pack
+            self._source_patterns_to_id[pack.pattern] = _id
+
+        keys = sorted(self._source_patterns_to_id)
+        self._stringvar_nr_packs_missing_tot.set(len(unprocessed_keys))
+        self._files_source.update_items(keys)
+        self._files_source.move_items_to_selected(keys)
+
+        self._update_ftp_frame()
+
+        # self._button_run.configure(state='normal')
+        tkw.enable_buttons_in_class(self)
+
+        # print('='*50)
+        # for key, value in self._source_patterns_to_id.items():
+        #     print(key, value)
+        # raise
+
+    def old_update_files(self, data=None):
         self._button_run.configure(state='disable')
         self._button_run.update_idletasks()
         self._active_keys = []
@@ -437,6 +645,10 @@ class PageSimple(tk.Frame):
         source_dir = self._local_data_path_source.value
         local_dir = self._local_data_path_root.value
         server_dir = self._server_data_path_root.value
+
+        self.sbe_paths.set_local_root_directory(local_dir)
+        self.sbe_paths.set_server_root_directory(server_dir)
+
         if not all([source_dir, local_dir, server_dir]):
             return
         source_packs = file_explorer.get_packages_in_directory(source_dir, with_new_key=True, old_key=self._old_key.value, exclude_directory='temp')
@@ -472,6 +684,8 @@ class PageSimple(tk.Frame):
                 continue
             self._active_keys_mapping[hex_file.stem] = key
 
+        self._update_ftp_frame()
+
         self._button_run.configure(state='normal')
 
     def _callback_change_config_path(self, *args):
@@ -495,4 +709,10 @@ class PageSimple(tk.Frame):
     def _callback_select_platform(self, *args):
         self.sbe_processing.set_platform(self._platform.value)
         self._update_surfacesaok_list()
+
+    def _update_ftp_frame(self):
+        nsf_path = self.sbe_paths.get_local_directory('nsf')
+        if not nsf_path:
+            return
+        self._ftp_frame.update_frame()
 
