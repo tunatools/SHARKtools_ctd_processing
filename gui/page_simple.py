@@ -216,7 +216,7 @@ class PageSimple(tk.Frame):
         self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
 
         r += 1
-        self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Använd gammalt filnamn', row=r, column=0, **layout)
+        self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
 
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=1)
 
@@ -367,53 +367,6 @@ class PageSimple(tk.Frame):
                 finally:
                     self._button_run.configure(state='normal')
 
-    def old_process_files(self):
-        self._active_keys = []
-        local_root = self._local_data_path_root.value
-        server_root = self._server_data_path_root.value
-        self.sbe_paths.set_local_root_directory(local_root)
-        self.sbe_paths.set_server_root_directory(server_root)
-
-        self._active_keys = self._files_source.get_selected()
-        active_paths = [pack.path('hex') for key, pack in self._unprocessed_packs.items() if key in self._active_keys]
-
-        for path in active_paths:
-            ignore_mismatch = False
-            try_fixing_mismatch = False
-            continue_trying = True
-            while continue_trying:
-                try:
-                    pack = ctd_processing.process_sbe_file(path,
-                                                           target_root_directory=self._local_data_path_root.value,
-                                                           config_root_directory=self._config_path.value,
-                                                           platform=self._platform.value,
-                                                           surfacesoak=self._surfacesoak.value,
-                                                           tau=self._tau.value,
-                                                           psa_paths=None,
-                                                           ignore_mismatch=ignore_mismatch,
-                                                           try_fixing_mismatch=try_fixing_mismatch,
-                                                           old_key=self._old_key.value
-                                                           )
-                    continue_trying = False
-                except FileExistsError:
-                    messagebox.showerror('File exists', f'Could not overwrite file. Select overwrite and try again.\n{path}')
-                    return
-                except file_explorer.seabird.MismatchWarning as e:
-                    ans = messagebox.askyesnocancel('Mismatch mellan filer',
-                                                f"""{e.data}\n\n
-                                                Välj "Ja" för att försöka lösa problemet. \nVälj "Nej" för att lösa problemet i seabird programvara. \nVälj "Avbryt" för att avbryta. """)
-                    if ans is True:
-                        try_fixing_mismatch = True
-                    elif ans is False:
-                        ignore_mismatch = True
-                    else:
-                        return
-                except Exception as e:
-                    messagebox.showerror('Något gick fel', traceback.format_exc())
-                    raise
-                finally:
-                    self._button_run.configure(state='normal')
-
     def _create_standard_format(self):
         try:
             all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'),
@@ -438,70 +391,12 @@ class PageSimple(tk.Frame):
         except Exception:
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
 
-    def old_create_standard_format(self):
-        try:
-            all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'), with_new_key=True, old_key=self._old_key.value)
-            packs = []
-            for key in self._active_keys:
-                pack = all_packs.get(self._active_keys_mapping.get(key))
-                if not pack:
-                    continue
-                packs.append(pack)
-            if not packs:
-                messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
-                return
-            new_packs = ctd_processing.create_standard_format_for_packages(packs,
-                                                                           target_root_directory=self._local_data_path_root.value,
-                                                                           config_root_directory=self._config_path.value,
-                                                                           sharkweb_btl_row_file=None,
-                                                                           old_key=self._old_key.value)
-        except PermissionError as e:
-            messagebox.showerror('Skapa standardformat',
-                                 f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
-        except Exception:
-            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
-
     def _preform_automatic_qc(self):
         all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
                                                             with_id_as_key=True, old_key=self._old_key.value)
         print(all_packs.keys())
         print(self._active_ids)
         files = [pack['txt'] for key, pack in all_packs.items() if key in self._active_ids]
-        if not files:
-            messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
-            return
-
-        tkw.disable_buttons_in_class(self)
-        try:
-            session = ctdpy_session.Session(filepaths=files,
-                                            reader='ctd_stdfmt')
-
-            datasets = session.read()
-
-            for data_key, item in datasets[0].items():
-                parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-                qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
-                qc_run()
-
-            data_path = session.save_data(datasets,
-                                          writer='ctd_standard_template', return_data_path=True,
-                                          save_path=self.sbe_paths.get_local_directory('temp'),
-                                          )
-
-            # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
-            data_path = Path(data_path)
-            time.sleep(.5)
-            for source_path in Path(data_path).iterdir():
-                target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
-                shutil.copyfile(source_path, target_path)
-            return data_path
-        except Exception:
-            messagebox.showwarning('Automatisk granskning', traceback.format_exc())
-
-    def old_preform_automatic_qc(self):
-        all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
-                                                            with_new_key=True, old_key=self._old_key.value)
-        files = [pack['txt'] for key, pack in all_packs.items() if key in self._active_keys]
         if not files:
             messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
             return
@@ -563,7 +458,7 @@ class PageSimple(tk.Frame):
         for _id in self._active_ids:
             pack = local_packs.get(_id)
             if not pack:
-                messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inge filer att kopiera...')
+                messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inga filer att kopiera...')
                 return
             if 'test' in pack.pattern:
                 continue
@@ -634,59 +529,6 @@ class PageSimple(tk.Frame):
         # for key, value in self._source_patterns_to_id.items():
         #     print(key, value)
         # raise
-
-    def old_update_files(self, data=None):
-        self._button_run.configure(state='disable')
-        self._button_run.update_idletasks()
-        self._active_keys = []
-        self._active_keys_mapping = {}
-        self._files_source.update_items([])
-
-        source_dir = self._local_data_path_source.value
-        local_dir = self._local_data_path_root.value
-        server_dir = self._server_data_path_root.value
-
-        self.sbe_paths.set_local_root_directory(local_dir)
-        self.sbe_paths.set_server_root_directory(server_dir)
-
-        if not all([source_dir, local_dir, server_dir]):
-            return
-        source_packs = file_explorer.get_packages_in_directory(source_dir, with_new_key=True, old_key=self._old_key.value, exclude_directory='temp')
-        local_packs = file_explorer.get_packages_in_directory(local_dir, with_new_key=True, old_key=self._old_key.value, exclude_directory='temp')
-        server_packs = file_explorer.get_packages_in_directory(server_dir, with_new_key=True, old_key=self._old_key.value, exclude_directory='temp')
-
-        nr_packs_total = len(source_packs)
-        nr_packs_not_local = 0
-        nr_packs_not_server = 0
-        unprocessed_keys = []
-        for key in source_packs:
-            if key not in local_packs:
-                nr_packs_not_local += 1
-            if key not in server_packs:
-                nr_packs_not_server += 1
-            if key not in local_packs and key not in server_packs:
-                unprocessed_keys.append(key)
-
-        self._stringvar_nr_packs_tot.set(nr_packs_total)
-        self._stringvar_nr_packs_missing_local.set(nr_packs_not_local)
-        self._stringvar_nr_packs_missing_server.set(nr_packs_not_server)
-
-        self._unprocessed_packs = dict((pack.path('hex').stem, pack) for key, pack in source_packs.items() if key in unprocessed_keys and pack.path('hex'))
-        keys = sorted(self._unprocessed_packs)
-        self._stringvar_nr_packs_missing_tot.set(len(unprocessed_keys))
-        self._files_source.update_items(keys)
-        self._files_source.move_items_to_selected(keys)
-
-        self._active_keys_mapping = {}
-        for key, pack in source_packs.items():
-            hex_file = pack.path('hex')
-            if not hex_file:
-                continue
-            self._active_keys_mapping[hex_file.stem] = key
-
-        self._update_ftp_frame()
-
-        self._button_run.configure(state='normal')
 
     def _callback_change_config_path(self, *args):
         logger.debug('=')
