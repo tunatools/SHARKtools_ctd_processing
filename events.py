@@ -21,7 +21,9 @@ class EventTypes:
                             'change_simple_old_key',
                             'update_series_local_source',
                             'change_local_data_path_raw',
-                            'change_year']
+                            'change_year',
+                            'change_ftp_credentials_path'
+                            ]
 
         for item in self.event_types:
             setattr(self, item, item)
