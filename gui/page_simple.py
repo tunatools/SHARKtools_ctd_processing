@@ -453,8 +453,6 @@ class PageSimple(tk.Frame):
     def _copy_files_to_server(self):
         local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), with_id_as_key=True,
                                                               old_key=self._old_key.value, exclude_directory='temp')
-        print('_active_ids', self._active_ids)
-        print('local_packs', local_packs.keys())
         for _id in self._active_ids:
             pack = local_packs.get(_id)
             if not pack:
