@@ -17,6 +17,7 @@ from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
+from sharkpylib.plot import create_seabird_like_plots_for_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 import logging
@@ -85,7 +86,7 @@ class PageSimple(tk.Frame):
                                       self._server_data_path_root,
                                       self._config_path,
                                       self._surfacesoak,
-                                      self._tau,
+                                      # self._tau,
                                       self._platform,
         )
 
@@ -212,8 +213,8 @@ class PageSimple(tk.Frame):
                                                                 width=15,
                                                                 row=r, column=0, **layout)
 
-        r += 1
-        self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
+        # r += 1
+        # self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
 
         r += 1
         self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
@@ -340,7 +341,7 @@ class PageSimple(tk.Frame):
                                                            config_root_directory=self._config_path.value,
                                                            platform=self._platform.value,
                                                            surfacesoak=self._surfacesoak.value,
-                                                           tau=self._tau.value,
+                                                           # tau=self._tau.value,
                                                            psa_paths=None,
                                                            ignore_mismatch=ignore_mismatch,
                                                            try_fixing_mismatch=try_fixing_mismatch,
@@ -391,12 +392,18 @@ class PageSimple(tk.Frame):
         except Exception:
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
 
-    def _preform_automatic_qc(self):
+    def _get_active_packs(self):
         all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
                                                             with_id_as_key=True, old_key=self._old_key.value)
-        print(all_packs.keys())
-        print(self._active_ids)
-        files = [pack['txt'] for key, pack in all_packs.items() if key in self._active_ids]
+        return [pack for key, pack in all_packs.items() if key in self._active_ids]
+
+    def _preform_automatic_qc(self):
+        packs = self._get_active_packs()
+        # all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
+        #                                                     with_id_as_key=True, old_key=self._old_key.value)
+        # print(all_packs.keys())
+        # print(self._active_ids)
+        files = [pack['txt'] for pack in packs]
         if not files:
             messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
             return
@@ -443,12 +450,18 @@ class PageSimple(tk.Frame):
             return
         self.bokeh_server.stop()
         self.bokeh_server = None
+        self._create_plots()
         self._button_run.config(state='normal')
         self._button_open_qc.config(state='normal')
         self._button_close_qc.config(bg=self._button_bg_color)
         self._copy_files_to_server()
         self._update_files()
         self._notebook.select_frame('Skicka via FTP')
+
+    def _create_plots(self):
+        packs = self._get_active_packs()
+        for pack in packs:
+            create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
 
     def _copy_files_to_server(self):
         local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), with_id_as_key=True,

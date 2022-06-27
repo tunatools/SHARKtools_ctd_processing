@@ -24,6 +24,7 @@ from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
 from sharkpylib import ftp
+from sharkpylib.plot import create_seabird_like_plots_from_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 
@@ -579,6 +580,7 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.config(state='normal')
         self._button_close_manual_qc.config(bg=self._button_bg_color)
         self._update_files_local_nsf()
+        self._create_plots()
         self._notebook_local.select_frame('Standardformat')
 
     def _callback_on_select_local_nsf(self):
@@ -749,40 +751,6 @@ class PageStart(tk.Frame):
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
             raise
 
-    def old_callback_continue_ftp(self):
-
-        cred = self.ftp_credentials
-        if not cred:
-            messagebox.showwarning('Skicka till FTP', 'Sökvägen till inloggningsuppgifter saknas eller är fel!')
-            return
-
-        files = self._files_local_ftp.get_selected()
-        if not files:
-            messagebox.showwarning('Skicka till FTP', 'Inga filer valda att skicka till ftp!')
-            return
-
-        directory = self._local_data_path_ftp.get()
-        paths = [Path(directory, file) for file in files]
-        obj = get_ftp_object(cred)
-        obj.add_files_to_send(*paths)
-        obj.send_files()
-        if self._ftp_test_checkbutton.get():
-            messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp (testmapp)')
-        else:
-            messagebox.showinfo('Skicka till FTP', 'Filer har skickats till ftp')
-        self._files_local_ftp.deselect_all()
-        self._update_files_ftp()
-
-    @property
-    def old_ftp_credentials(self):
-        cred_path = self._ftp_credentials_path.get()
-        if not cred_path or not cred_path.exists():
-            return {}
-        with open(cred_path) as fid:
-            cred = json.load(fid)
-        cred['test'] = bool(self._ftp_test_checkbutton.get())
-        return cred
-
     def _get_selected_local_cnv_stems(self):
         files = self._files_local_cnv.get_selected()
         if not files:
@@ -816,10 +784,6 @@ class PageStart(tk.Frame):
                                                                      hard_press=True,
                                                                      # end_with_folders=['data', '<YEAR>'],
                                                                      row=r, column=c, **layout)
-
-        # self._button_update_server = tk.Button(frame, text='Uppdatera',
-        #                                         command=self._update_all_server)
-        # self._button_update_server.grid(row=r, column=c + 1, padx=5, pady=2, sticky='w')
 
         r += 1
         self._server_data_path_nsf = components.DirectoryLabelText(frame, 'server_data_path_nsf',
@@ -940,41 +904,6 @@ class PageStart(tk.Frame):
         selected_keys = [key for key in all_keys if key in self._converted_files]
         self._ftp_frame.move_keys_to_selected(selected_keys)
 
-        # files = get_files_in_directory(self._local_data_path_qc.value)
-        # self._ftp_frame.update_items(files)
-        # self._ftp_frame.deselect_all()
-        # all_txt_files = {}
-        # for item in self._ftp_frame.get_all_items():
-        #     if not item.endswith('.txt'):
-        #         continue
-        #     name, suffix = item.split('.')
-        #     all_txt_files[name] = item
-        # select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
-        # self._ftp_frame.move_items_to_selected(select_files)
-
-    def old_update_files_local_ftp(self):
-        files = get_files_in_directory(self._local_data_path_qc.value)
-        self._files_local_ftp.update_items(files)
-        self._files_local_ftp.deselect_all()
-        all_txt_files = {}
-        for item in self._files_local_ftp.get_all_items():
-            if not item.endswith('.txt'):
-                continue
-            name, suffix = item.split('.')
-            all_txt_files[name] = item
-        select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
-        self._files_local_ftp.move_items_to_selected(select_files)
-        self._update_files_ftp()
-
-    def old_update_files_ftp(self):
-        self._files_on_ftp.update_items()
-        cred = self.ftp_credentials
-        if not cred:
-            return
-        obj = get_ftp_object(cred)
-        file_list = obj.server_files[:]
-        self._files_on_ftp.update_items(file_list)
-
     def _update_files_local_nsf_all(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
         self._files_local_nsf_all.update_items(files[:])
@@ -1054,6 +983,14 @@ class PageStart(tk.Frame):
         self._callback_change_local_root_directory()
         self._update_all_server()
 
+    def _create_plots(self):
+        directory = self.sbe_paths.get_local_directory('nsf')
+        names = self._files_local_qc.get_selected()
+        for name in names:
+            path = Path(directory, name)
+            pack = file_explorer.get_package_for_file(path)
+            create_seabird_like_plots_from_package(pack, self.sbe_paths.get_local_directory('plot'))
+
     def _update_all_local(self):
         self._update_files_local_source()
         self._update_files_local_raw()
@@ -1072,15 +1009,6 @@ class PageStart(tk.Frame):
     def update_all(self):
         self._update_all_local()
         self._update_all_server()
-
-
-def old_get_ftp_object(credentials):
-    test = credentials.pop('test', True)
-    obj = ftp.Ftp(**credentials)
-    if test:
-        obj.change_directory('test')
-    return obj
-
 
 
 
