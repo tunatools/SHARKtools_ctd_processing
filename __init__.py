@@ -5,12 +5,12 @@ from . import gui
 from .app import App
 
 
-INFO = dict(title='CTD Processing',
+INFO = dict(title='CTD-processering',
             users_directory='users',
             sub_pages=[dict(name='PageSimple',
-                            title='Enkel processering'),
+                            title='CTD-processering (Förenklad)'),
                        dict(name='PageStart',
-                            title='CTD-processering'),
+                            title='CTD-processering (Avancerad)'),
                        dict(name='PageInspect',
                             title='Inspektera och behandla')
                        ],
