@@ -13,6 +13,8 @@ import core
 from plugins.SHARKtools_ctd_processing import gui
 from plugins.plugin_app import PluginApp
 
+from .events import subscribe
+
 ALL_PAGES = dict()
 ALL_PAGES['PageStart'] = gui.PageStart
 ALL_PAGES['PageInspect'] = gui.PageInspect
@@ -71,10 +73,15 @@ class App(PluginApp):
 
         self.startup_pages()
 
+        subscribe('goto_pre_system_svea', self._goto_pre_system_svea)
+
         self.page_history = ['PageUser']
         # self.show_frame('PageStart')
 
-        self.update_all()
+        # self.update_all()
+
+    def _goto_pre_system_svea(self , *args):
+        self.main_app.show_subframe('SHARKtools_pre_system_Svea', 'PageStart')
 
     def close(self):
         for page_name, frame in self.frames.items():

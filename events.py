@@ -22,7 +22,8 @@ class EventTypes:
                             'update_series_local_source',
                             'change_local_data_path_raw',
                             'change_year',
-                            'change_ftp_credentials_path'
+                            'change_ftp_credentials_path',
+                            'goto_pre_system_svea'
                             ]
 
         for item in self.event_types:
