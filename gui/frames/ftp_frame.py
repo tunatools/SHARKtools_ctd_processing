@@ -2,12 +2,14 @@ import json
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
+import traceback
 
 import sharkpylib.tklib.tkinter_widgets as tkw
 from sharkpylib import ftp
 
 from .. import components
 from ...events import subscribe
+from ...events import post_event
 from ...saves import SaveComponents
 
 LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka',
@@ -98,11 +100,19 @@ class FtpFrame(tk.Frame):
                                                prop_listbox=listbox_prop,
                                                include_delete_button=False,
                                                padx=5, pady=2, sticky='e')
+        self._stringvar_ftp_status = tk.StringVar()
+        self._label_ftp_status = tk.Label(right_frame, textvariable=self._stringvar_ftp_status)
+        self._label_ftp_status.grid(row=4, column=0, **layout)
 
-        self._button_send_files_via_ftp = tk.Button(right_frame, text='Skicka filer via ftp', command=self._callback_continue_ftp)
-        self._button_send_files_via_ftp.grid(row=4, column=2, padx=5, pady=2, sticky='se')
+        self._button_send_files_via_ftp = tk.Button(right_frame, text='Skicka filer via ftp',
+                                                    command=self._callback_continue_ftp)
+        self._button_send_files_via_ftp.grid(row=4, column=1, padx=5, pady=2, sticky='se')
 
-        tkw.grid_configure(right_frame, nr_rows=5, nr_columns=1)
+        self._button_back_to_pre_system = tk.Button(right_frame, text='Till Försystemet',
+                                                    command=self._callback_pre_system)
+        self._button_back_to_pre_system.grid(row=5, column=1, padx=5, pady=2, sticky='se')
+
+        tkw.grid_configure(right_frame, nr_rows=6, nr_columns=2)
 
     def _on_toggle_ftp_test(self):
         self._update_files_ftp()
@@ -133,6 +143,7 @@ class FtpFrame(tk.Frame):
         return cred
 
     def _callback_continue_ftp(self):
+        self._update_ftp_status('')
 
         cred = self.ftp_credentials
         if not cred:
@@ -144,17 +155,43 @@ class FtpFrame(tk.Frame):
             messagebox.showwarning('Skicka till FTP', 'Inga filer valda att skicka till ftp!')
             return
 
-        directory = self._local_data_path_ftp.get()
-        paths = [Path(directory, file) for file in files]
-        paths.extend(self._get_cnv_paths_matching_file_names(files))
-        obj = get_ftp_object(cred)
-        obj.add_files_to_send(*paths)
-        obj.send_files()
-        self._files_local_ftp.deselect_all()
-        self._update_files_ftp()
+        self._update_ftp_status('Börjar skicka filer...')
 
-        messagebox.showinfo('Skicka till FTP',
-                            f'{len(paths)} filer har skickats till {self._get_ftp_destination()}')
+        try:
+            directory = self._local_data_path_ftp.get()
+            paths = [Path(directory, file) for file in files]
+            paths.extend(self._get_cnv_paths_matching_file_names(files))
+            obj = get_ftp_object(cred, status_callback=self._ftp_progress)
+            obj.add_files_to_send(*paths)
+            obj.send_files()
+            self._files_local_ftp.deselect_all()
+            self._update_files_ftp()
+
+            messagebox.showinfo('Skicka till FTP',
+                                f'{len(paths)} filer har skickats till {self._get_ftp_destination()}')
+        except ftp.FtpConnectionError:
+            messagebox.showerror('Skicka filer till FTP', 'Kunde inte skicka filer. Kunde inte koppla upp mot ftp. Internet kanske inte fungerar.')
+        except:
+            messagebox.showerror('Skicka filer till FTP',
+                                 f'Något gick fel: {traceback.format_exc()}')
+        finally:
+            self._update_ftp_status('')
+
+    def _ftp_progress(self, status):
+        t = status[0]
+        n = status[1]
+        percent = int(t/n*100)
+        tail = '...'
+        if percent == 100:
+            tail = '!'
+        self._update_ftp_status(f'{percent}% ({t} av {n} filer) skickat{tail}')
+
+    def _update_ftp_status(self, string):
+        self._stringvar_ftp_status.set(string)
+        self._label_ftp_status.update_idletasks()
+
+    def _callback_pre_system(self, *args):
+        post_event('goto_pre_system_svea', None)
 
     def _get_cnv_paths_matching_file_names(self, file_names):
         if not self._also_send_cnv_files.get():
@@ -188,13 +225,14 @@ class FtpFrame(tk.Frame):
         self._files_local_ftp.deselect_all()
 
     def move_keys_to_selected(self, keys):
+        return
         items = [f'{key}.txt' for key in keys]
         self._files_local_ftp.move_items_to_selected(items)
 
 
-def get_ftp_object(credentials):
+def get_ftp_object(credentials, **kwargs):
     test = credentials.pop('test', True)
-    obj = ftp.Ftp(**credentials)
+    obj = ftp.Ftp(**credentials, **kwargs)
     if test:
         obj.change_directory('test')
     return obj
