@@ -24,7 +24,7 @@ from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
 from sharkpylib import ftp
-from sharkpylib.plot import create_seabird_like_plots_from_package
+from sharkpylib.plot import create_seabird_like_plots_for_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 
@@ -989,7 +989,7 @@ class PageStart(tk.Frame):
         for name in names:
             path = Path(directory, name)
             pack = file_explorer.get_package_for_file(path)
-            create_seabird_like_plots_from_package(pack, self.sbe_paths.get_local_directory('plot'))
+            create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
 
     def _update_all_local(self):
         self._update_files_local_source()
