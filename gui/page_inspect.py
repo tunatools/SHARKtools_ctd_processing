@@ -166,7 +166,6 @@ class PageInspect(tk.Frame):
         if not local_root_path or not Path(local_root_path).exists():
             messagebox.showwarning('Kopiera till lokal mapp', 'Ingen lokal sökväg angiven!')
             return
-
         sbe_paths = SBEPaths()
         sbe_paths.set_local_root_directory(local_root_path)
         nr_created = 0

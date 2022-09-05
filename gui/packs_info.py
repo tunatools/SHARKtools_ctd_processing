@@ -15,7 +15,7 @@ class PacksInfo(tk.Frame):
         super().__init__(parent, *args, **kwargs)
         self._all_packs = None
         self._selected_packs = None
-        self._selected_packs_info = None
+        self._selected_packs_info = {}
         self._stringvars_nr_files = {}
         self._stringvars_compilation = {}
         self._labels_compilation = {}
@@ -131,7 +131,7 @@ class PacksInfo(tk.Frame):
 
         self._packs = None
         self._selected_packs = None
-        self._selected_packs_info = None
+        self._selected_packs_info = {}
 
     def _update_listbox_keys(self):
         self._listbox_keys.update_items()  # This will reset the listbox
@@ -157,6 +157,8 @@ class PacksInfo(tk.Frame):
 
         nr_files = self._selected_packs_info.get('nr_files', {})
         for suffix, nr in nr_files.items():
+            if not self._stringvars_nr_files.get(suffix):
+                continue
             self._stringvars_nr_files[suffix].set(str(nr or 0))
 
     def _update_metadata(self, *args):

@@ -24,7 +24,7 @@ from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
 from sharkpylib import ftp
-from sharkpylib.plot import create_seabird_like_plots_for_package
+from sharkpylib import plot
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 
@@ -63,6 +63,8 @@ class PageStart(tk.Frame):
         self.sbe_post_processing = None
 
         self.bokeh_server = None
+
+        self._plot_config_popup = None
 
         self._processed_files = []
         self._converted_files = []
@@ -160,6 +162,7 @@ class PageStart(tk.Frame):
         self._make_config_root_updates(message=False)
         self._make_local_root_updates(message=False)
         self._make_server_root_updates(message=False)
+        self._notebook_local.select_frame('Börja här')
 
     def _update_surfacesaok_list(self):
         if not self._config_path.value:
@@ -374,7 +377,11 @@ class PageStart(tk.Frame):
                                                  command=self._callback_stop_manual_qc)
         self._button_close_manual_qc.grid(row=3, column=0, padx=5, pady=2, sticky='se')
 
-        tkw.grid_configure(right_frame, nr_rows=4, nr_columns=1)
+        self._button_create_plots = tk.Button(right_frame, text='Skapa plottar',
+                                                 command=self._callback_create_plots)
+        self._button_create_plots.grid(row=4, column=0, padx=5, pady=2, sticky='se')
+
+        tkw.grid_configure(right_frame, nr_rows=5, nr_columns=1)
 
     def _build_frame_local_nsf(self):
         frame = self._notebook_local('Standardformat')
@@ -582,6 +589,11 @@ class PageStart(tk.Frame):
         self._update_files_local_nsf()
         self._create_plots()
         self._notebook_local.select_frame('Standardformat')
+
+    def _callback_create_plots(self):
+        created = self._create_plots(with_config=True)
+        if created:
+            messagebox.showinfo('Skapa plottar', f"Plottar har skapats här: {self.sbe_paths.get_local_directory('plot')}")
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -983,13 +995,30 @@ class PageStart(tk.Frame):
         self._callback_change_local_root_directory()
         self._update_all_server()
 
-    def _create_plots(self):
+    def _create_plots(self, with_config=False):
         directory = self.sbe_paths.get_local_directory('nsf')
         names = self._files_local_qc.get_selected()
-        for name in names:
-            path = Path(directory, name)
+        if not names:
+            messagebox.showwarning('Skapa plottar', 'Inga filer valda för att skapa plottar!')
+            return False
+        if with_config and len(names) == 1:
+            path = Path(directory, names[0])
             pack = file_explorer.get_package_for_file(path)
-            create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
+            self._show_config_plot_popup(pack)
+        else:
+            for name in names:
+                path = Path(directory, name)
+                pack = file_explorer.get_package_for_file(path)
+                plot.create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
+            return True
+
+    def _show_config_plot_popup(self, pack):
+        self._plot_config_popup = frames.PlotOptionsFrame(self, pack, callback=self._on_return_plot_config)
+
+    def _on_return_plot_config(self, pack, **kwargs):
+        plot.create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'), **kwargs)
+        self._plot_config_popup.destroy()
+        self._plot_config_popup = None
 
     def _update_all_local(self):
         self._update_files_local_source()

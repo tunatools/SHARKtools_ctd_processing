@@ -99,6 +99,8 @@ class FtpFrame(tk.Frame):
         self._files_on_ftp = tkw.ListboxWidget(right_frame, row=3, column=0,
                                                prop_listbox=listbox_prop,
                                                include_delete_button=False,
+                                               only_unique_items=False,
+                                               sort_items=False,
                                                padx=5, pady=2, sticky='e')
         self._stringvar_ftp_status = tk.StringVar()
         self._label_ftp_status = tk.Label(right_frame, textvariable=self._stringvar_ftp_status)
@@ -124,7 +126,8 @@ class FtpFrame(tk.Frame):
         if not cred:
             return
         obj = get_ftp_object(cred)
-        file_list = obj.server_files[:]
+        file_list = sorted(obj.server_files[:], key=lambda x: x.lower(), reverse=True)
+        file_list = [item for item in file_list if '.' in item] + [item for item in file_list if '.' not in item]
         self._files_on_ftp.update_items(file_list)
 
     def update_frame(self):

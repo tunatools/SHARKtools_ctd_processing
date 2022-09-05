@@ -103,6 +103,7 @@ class PageSimple(tk.Frame):
         self._update_lists()
         self._save_obj.load(component=self._surfacesoak)
         self._update_files()
+        self._notebook.select_frame('Processering')
 
     def close(self):
         self._close_manual_qc()
@@ -494,11 +495,14 @@ class PageSimple(tk.Frame):
         if not all([source_dir, local_dir, server_dir]):
             return
         source_packs = file_explorer.get_packages_in_directory(source_dir, with_id_as_key=True,
-                                                               old_key=self._old_key.value, exclude_directory='temp')
+                                                               old_key=self._old_key.value, exclude_directory='temp',
+                                                               exclude_string='sbe19')
         local_packs = file_explorer.get_packages_in_directory(local_dir, with_id_as_key=True,
-                                                              old_key=self._old_key.value, exclude_directory='temp')
+                                                              old_key=self._old_key.value, exclude_directory='temp',
+                                                              exclude_string='sbe19')
         server_packs = file_explorer.get_packages_in_directory(server_dir, with_id_as_key=True,
-                                                               old_key=self._old_key.value, exclude_directory='temp')
+                                                               old_key=self._old_key.value, exclude_directory='temp',
+                                                               exclude_string='sbe19')
 
         nr_packs_total = len(source_packs)
         nr_packs_not_local = 0
