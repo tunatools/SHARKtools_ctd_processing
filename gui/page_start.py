@@ -90,6 +90,7 @@ class PageStart(tk.Frame):
                                       self._platform,
                                       self._overwrite,
                                       self._year,
+                                      self._create_plots_option
         )
 
         self._save_obj.load()
@@ -361,27 +362,36 @@ class PageStart(tk.Frame):
         tkw.grid_configure(left_frame, nr_rows=3, nr_columns=1)
 
         # Right frame
+        r = 0
         self._intvar_allow_automatic_qc_same_day = tk.IntVar()
         cb = tk.Checkbutton(right_frame, text='Tillåt automatisk granskning samma dag',  variable=self._intvar_allow_automatic_qc_same_day)
-        cb.grid(row=0, column=0, padx=5, pady=2, sticky='se')
+        cb.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        r += 1
+        self._create_plots_option = components.Checkbutton(right_frame, 'create_plots_option', title='Skapa plottar', row=r, column=0, padx=5, pady=2, sticky='se')
+        self._create_plots_option.set(True)
+
+        r += 1
         self._button_automatic_qc = tk.Button(right_frame, text='1) Utför automatisk granskning',
                                               command=self._callback_continue_automatic_qc)
-        self._button_automatic_qc.grid(row=1, column=0, padx=5, pady=2, sticky='se')
+        self._button_automatic_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        r += 1
         self._button_open_manual_qc = tk.Button(right_frame, text='2) Öppna manuell granskning (alla filer)',
                                                 command=self._callback_start_manual_qc)
-        self._button_open_manual_qc.grid(row=2, column=0, padx=5, pady=2, sticky='se')
+        self._button_open_manual_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        r += 1
         self._button_close_manual_qc = tk.Button(right_frame, text='3) Stäng manuell granskning',
                                                  command=self._callback_stop_manual_qc)
-        self._button_close_manual_qc.grid(row=3, column=0, padx=5, pady=2, sticky='se')
+        self._button_close_manual_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
+        r += 1
         self._button_create_plots = tk.Button(right_frame, text='Skapa plottar',
                                                  command=self._callback_create_plots)
-        self._button_create_plots.grid(row=4, column=0, padx=5, pady=2, sticky='se')
+        self._button_create_plots.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
-        tkw.grid_configure(right_frame, nr_rows=5, nr_columns=1)
+        tkw.grid_configure(right_frame, nr_rows=r+1, nr_columns=1)
 
     def _build_frame_local_nsf(self):
         frame = self._notebook_local('Standardformat')
@@ -574,8 +584,10 @@ class PageStart(tk.Frame):
         self._button_open_manual_qc.config(state='disabled')
         self._button_automatic_qc.config(state='disabled')
         self._button_close_manual_qc.config(bg='red')
+        file_names = self._files_local_qc.get_selected()
         self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'),
-                                  visualize_setting='smhi_expedition_vis')
+                                  visualize_setting='smhi_expedition_vis',
+                                  filters={'file_names': file_names})
         self.bokeh_server.start()
 
     def _callback_stop_manual_qc(self):
@@ -587,7 +599,8 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.config(state='normal')
         self._button_close_manual_qc.config(bg=self._button_bg_color)
         self._update_files_local_nsf()
-        self._create_plots()
+        if self._create_plots_option.get():
+            self._create_plots()
         self._notebook_local.select_frame('Standardformat')
 
     def _callback_create_plots(self):
@@ -833,7 +846,7 @@ class PageStart(tk.Frame):
         if not path.exists():
             raise FileNotFoundError(path)
         self.sbe_paths.set_server_root_directory(path)
-        self._update_server_data_directories()
+        self._update_all_server()
 
     def _callback_update_series_local_source(self, *args):
         """ Called when one or more source files is selected. """
