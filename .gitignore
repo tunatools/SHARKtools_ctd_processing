@@ -1,3 +1,5 @@
+*.plantuml
+
 .idea
 .ipynb_checkpoints
 .spyproject

@@ -26,7 +26,7 @@ from . import components
 from . import frames
 from ..events import subscribe
 from ..saves import SaveComponents
-from ..utils import get_files_in_directory
+from ..utils import open_paths_in_default_program
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ class PageSimple(tk.Frame):
         # self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
 
         r += 1
-        self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
+        # self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
 
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=1)
 
@@ -451,7 +451,8 @@ class PageSimple(tk.Frame):
             return
         self.bokeh_server.stop()
         self.bokeh_server = None
-        self._create_plots()
+        image_paths = self._create_plots()
+        open_paths_in_default_program(image_paths)
         self._button_run.config(state='normal')
         self._button_open_qc.config(state='normal')
         self._button_close_qc.config(bg=self._button_bg_color)
@@ -461,8 +462,11 @@ class PageSimple(tk.Frame):
 
     def _create_plots(self):
         packs = self._get_active_packs()
+        image_paths = []
         for pack in packs:
-            create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
+            img_paths = create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
+            image_paths.extend(img_paths)
+        return image_paths
 
     def _copy_files_to_server(self):
         local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), with_id_as_key=True,

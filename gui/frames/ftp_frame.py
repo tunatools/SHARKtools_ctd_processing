@@ -77,6 +77,8 @@ class FtpFrame(tk.Frame):
         self._files_local_ftp = tkw.ListboxSelectionWidget(left_frame, row=1, column=0,
                                                            columnspan=2,
                                                            count_text='filer',
+                                                           only_unique_items=False,
+                                                           sort_items=False,
                                                            prop=listbox_prop,
                                                            **LISTBOX_TITLES,
                                                            **layout)
@@ -215,7 +217,7 @@ class FtpFrame(tk.Frame):
         directory = Path(self._local_data_path_ftp.get())
         if not directory.exists():
             return
-        items = [path.name for path in directory.iterdir()]
+        items = sorted([path.name for path in directory.iterdir()], reverse=True)
         self._files_local_ftp.update_items(items)
 
     def get_all_items(self):
@@ -228,7 +230,6 @@ class FtpFrame(tk.Frame):
         self._files_local_ftp.deselect_all()
 
     def move_keys_to_selected(self, keys):
-        return
         items = [f'{key}.txt' for key in keys]
         self._files_local_ftp.move_items_to_selected(items)
 
