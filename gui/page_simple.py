@@ -218,8 +218,9 @@ class PageSimple(tk.Frame):
         # self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
 
         r += 1
-        # self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
-
+        self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
+        self._old_key.set(False)
+        self._old_key.checkbutton.config(state='disabled')
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=1)
 
     def _build_frame_files(self):

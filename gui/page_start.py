@@ -229,8 +229,10 @@ class PageStart(tk.Frame):
 
         self._year = components.YearEntry(frame, 'year', title='År', row=2, column=1, **layout)
 
-        # self._old_key = components.Checkbutton(frame, 'old_key', title='Generera gammalt filnamn', row=3, column=0,
-        #                                          **layout)
+        self._old_key = components.Checkbutton(frame, 'old_key', title='Generera gammalt filnamn', row=3, column=0,
+                                                 **layout)
+        self._old_key.set('False')
+        self._old_key.checkbutton.config(state='disabled')
 
         # self._button_update = tk.Button(frame, text='Uppdatera mappinnehåll mm.',
         #                                  command=self._update_all_local)
