@@ -84,9 +84,11 @@ class PageStart(tk.Frame):
         self._save_obj.add_components(self._local_data_path_source,
                                       self._local_data_path_root,
                                       self._server_data_path_root,
+                                      self._asvp_files_directory,
                                       self._config_path,
                                       self._surfacesoak,
                                       self._tau,
+                                      self._create_asvp_files,
                                       self._platform,
                                       self._overwrite,
                                       self._year,
@@ -214,7 +216,7 @@ class PageStart(tk.Frame):
     def _build_top_frame(self):
         frame = self._top_frame
         layout = dict(padx=5,
-                      pady=5,
+                      pady=2,
                       sticky='nw')
 
         self._config_path = components.DirectoryLabelText(frame, 'config_path', title='Rotkatalog för configfiler:',
@@ -234,11 +236,15 @@ class PageStart(tk.Frame):
         self._old_key.set('False')
         self._old_key.checkbutton.config(state='disabled')
 
+        self._asvp_files_directory = components.DirectoryButtonText(frame, 'asvp_files_directory',
+                                                                    title='Spara asvp filer här:',
+                                                                    row=4, column=0, **layout)
+
         # self._button_update = tk.Button(frame, text='Uppdatera mappinnehåll mm.',
         #                                  command=self._update_all_local)
         # self._button_update.grid(row=2, column=1, padx=5, pady=2, sticky='ne')
 
-        tkw.grid_configure(frame, nr_rows=3, nr_columns=2)
+        tkw.grid_configure(frame, nr_rows=5, nr_columns=2)
 
     def _build_frame_local_data(self):
         frame = self._frame_local_data
@@ -283,10 +289,18 @@ class PageStart(tk.Frame):
                                                               **layout)
 
         r += 1
-        self._surfacesoak = components.LabelDropdownList(frame, 'surfacesoak', title='Surfacesoak', width=15,
-                                                         row=r, column=0, **layout)
+        option_frame = tk.Frame(frame)
+        option_frame.grid(row=r, column=0, columnspan=2, **layout)
 
-        self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=1, **layout)
+        self._surfacesoak = components.LabelDropdownList(option_frame, 'surfacesoak', title='Surfacesoak', width=15,
+                                                         row=0, column=0, **layout)
+
+        self._tau = components.Checkbutton(option_frame, 'tau', title='Tau', row=0, column=1, **layout)
+
+        self._create_asvp_files = components.Checkbutton(option_frame, 'create_asvp_files',
+                                                             title='Skapa asvp-filer', row=0,
+                                                             column=2, **layout)
+        tkw.grid_configure(option_frame, nr_rows=1, nr_columns=3)
 
         r += 1
         self._button_continue_source = tk.Button(frame, text='Kör processering', command=self._callback_continue_source)
@@ -690,6 +704,11 @@ class PageStart(tk.Frame):
 
         processed_files = []
 
+        create_asvp_file = False
+        asvp_output_dir = self._asvp_files_directory.get()
+        if asvp_output_dir:
+            create_asvp_file = self._create_asvp_files.get()
+
         for file_name in selected:
             path = Path(self._local_data_path_source.value, file_name)
             ignore_mismatch = False
@@ -707,7 +726,9 @@ class PageStart(tk.Frame):
                                                            psa_paths=None,
                                                            ignore_mismatch=ignore_mismatch,
                                                            try_fixing_mismatch=try_fixing_mismatch,
-                                                           old_key=self._old_key.value
+                                                           old_key=self._old_key.value,
+                                                           create_asvp_file=create_asvp_file,
+                                                           asvp_output_dir=asvp_output_dir,
                                                            )
                     # self.sbe_processing.select_file(path)
                     # self.sbe_processing.select_file(path)

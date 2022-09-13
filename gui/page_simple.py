@@ -349,7 +349,7 @@ class PageSimple(tk.Frame):
 
         create_asvp_file = False
         asvp_output_dir = self._asvp_files_directory.get()
-        if not asvp_output_dir:
+        if asvp_output_dir:
             create_asvp_file = True
 
         for path in active_paths:
@@ -369,7 +369,8 @@ class PageSimple(tk.Frame):
                                                            try_fixing_mismatch=try_fixing_mismatch,
                                                            old_key=self._old_key.value,
                                                            create_asvp_file=create_asvp_file,
-                                                           asvp_output_dir=asvp_output_dir
+                                                           asvp_output_dir=asvp_output_dir,
+                                                           delete_old_asvp_files=self._delete_old_asvp_files.get()
                                                            )
                     continue_trying = False
                 except FileExistsError:
