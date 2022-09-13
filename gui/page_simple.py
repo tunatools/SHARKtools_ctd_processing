@@ -84,6 +84,8 @@ class PageSimple(tk.Frame):
         self._save_obj.add_components(self._local_data_path_source,
                                       self._local_data_path_root,
                                       self._server_data_path_root,
+                                      self._asvp_files_directory,
+                                      self._delete_old_asvp_files,
                                       self._config_path,
                                       self._surfacesoak,
                                       # self._tau,
@@ -191,6 +193,16 @@ class PageSimple(tk.Frame):
                                                                       row=r, column=0, **layout)
 
         r += 1
+        self._asvp_files_directory = components.DirectoryButtonText(frame, 'asvp_files_directory',
+                                                                     title='Spara asvp filer här:',
+                                                                     row=r, column=0, **layout)
+
+        r += 1
+        self._delete_old_asvp_files = components.Checkbutton(frame, 'delete_old_asvp_files', title='Ta bort gamla asvp-filer', row=r,
+                                               column=0, **layout)
+
+
+        r += 1
         self._button_update = tk.Button(self._frame_paths, text='Uppdatera',
                                         command=self._update_files)
         self._button_update.grid(row=1, column=0, padx=5, pady=5, sticky='sw')
@@ -221,6 +233,9 @@ class PageSimple(tk.Frame):
         self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
         self._old_key.set(False)
         self._old_key.checkbutton.config(state='disabled')
+
+
+
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=1)
 
     def _build_frame_files(self):
@@ -332,6 +347,11 @@ class PageSimple(tk.Frame):
         self._active_ids = [self._source_patterns_to_id[pat] for pat in active_patterns]
         active_paths = [pack.path('hex') for _id, pack in self._id_to_source_pack.items() if _id in self._active_ids]
 
+        create_asvp_file = False
+        asvp_output_dir = self._asvp_files_directory.get()
+        if not asvp_output_dir:
+            create_asvp_file = True
+
         for path in active_paths:
             ignore_mismatch = False
             try_fixing_mismatch = False
@@ -347,7 +367,9 @@ class PageSimple(tk.Frame):
                                                            psa_paths=None,
                                                            ignore_mismatch=ignore_mismatch,
                                                            try_fixing_mismatch=try_fixing_mismatch,
-                                                           old_key=self._old_key.value
+                                                           old_key=self._old_key.value,
+                                                           create_asvp_file=create_asvp_file,
+                                                           asvp_output_dir=asvp_output_dir
                                                            )
                     continue_trying = False
                 except FileExistsError:
