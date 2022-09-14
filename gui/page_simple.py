@@ -62,7 +62,7 @@ class PageSimple(tk.Frame):
 
         self._button_bg_color = None
         self._yes_color = '#00e025'
-        self._no_color = '#eb4034'
+        self._no_color = '#2ba828'
 
         self._listbox_prop = {'width': 45, 'height': 6}
 
