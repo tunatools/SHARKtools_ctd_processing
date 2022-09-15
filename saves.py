@@ -94,6 +94,7 @@ class Saves:
             json.dump(self.data, fid, indent=4, sort_keys=True)
 
     def set(self, key, value):
+        self._load()
         self.data[key] = value
         self._save()
 
@@ -168,10 +169,11 @@ class SaveComponents:
         for comp in self._components_to_store:
             try:
                 value = comp.get()
-                if type(value) != bool:
+                if value is None:
+                    pass
+                elif type(value) != bool:
                     value = str(value)
                 data[comp._id] = value
-                # print(f'SAVING: {comp._id} - {data[comp._id]}')
             except:
                 pass
         self._saves.set(self._saves_id_key, data)
