@@ -234,8 +234,6 @@ class PageSimple(tk.Frame):
         self._old_key.set(False)
         self._old_key.checkbutton.config(state='disabled')
 
-
-
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=1)
 
     def _build_frame_files(self):
@@ -465,10 +463,20 @@ class PageSimple(tk.Frame):
         self._button_run.config(state='disabled')
         self._button_open_qc.config(state='disabled')
         self._button_close_qc.config(bg=self._no_color)
+        file_names = self._get_file_names_for_selected_files_cruise()
+        logger.debug(f'{file_names=}')
         self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'),
-                                  visualize_setting='smhi_expedition_vis')
+                                  visualize_setting='smhi_expedition_vis',
+                                  filters={'file_names': file_names})
         self.bokeh_server.start()
         # self._button_close_qc.config(state='normal')
+
+    def _get_file_names_for_selected_files_cruise(self):
+        active_packs = self._get_active_packs()
+        all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), as_list=True)
+        cruises = set([pack('cruise') for pack in active_packs])
+        file_names = [pack.get_file_path(suffix='.txt').name for pack in all_packs if pack('cruise') in cruises]
+        return file_names
 
     def _close_manual_qc(self):
         if not self.bokeh_server:
@@ -517,11 +525,12 @@ class PageSimple(tk.Frame):
         local_dir = self._local_data_path_root.value
         server_dir = self._server_data_path_root.value
 
+        if not all([source_dir, local_dir, server_dir]):
+            return
+
         self.sbe_paths.set_local_root_directory(local_dir)
         self.sbe_paths.set_server_root_directory(server_dir)
 
-        if not all([source_dir, local_dir, server_dir]):
-            return
         source_packs = file_explorer.get_packages_in_directory(source_dir, with_id_as_key=True,
                                                                old_key=self._old_key.value, exclude_directory='temp',
                                                                exclude_string='sbe19')
@@ -592,6 +601,8 @@ class PageSimple(tk.Frame):
         self._platform.values = list(self.sbe_processing.get_platform_options())
 
     def _callback_select_platform(self, *args):
+        if not self._platform.get():
+            return
         self.sbe_processing.set_platform(self._platform.value)
         self._update_surfacesaok_list()
 
