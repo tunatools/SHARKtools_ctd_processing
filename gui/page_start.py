@@ -95,7 +95,7 @@ class PageStart(tk.Frame):
                                       self._create_plots_option
         )
 
-        self._save_obj.load()
+        self._save_obj.load(user=self.user.name)
 
         subscribe('change_config_path', self._callback_change_config_path)
         subscribe('change_local_data_path_source', self._callback_change_local_source_directory)
@@ -116,7 +116,7 @@ class PageStart(tk.Frame):
     def close(self):
         self._callback_stop_manual_qc()
         self._ftp_frame.close()
-        self._save_obj.save()
+        self._save_obj.save(user=self.user.name)
 
     def _callback_select_platform(self, *args):
         self.sbe_processing.set_platform(self._platform.value)
@@ -162,6 +162,8 @@ class PageStart(tk.Frame):
         return True
 
     def update_page(self):
+        print(f'{self.user=}')
+        self._save_obj.load(user=self.user.name)
         self._make_config_root_updates(message=False)
         self._make_local_root_updates(message=False)
         self._make_server_root_updates(message=False)

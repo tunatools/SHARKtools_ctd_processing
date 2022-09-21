@@ -92,7 +92,7 @@ class PageSimple(tk.Frame):
                                       self._platform,
         )
 
-        self._save_obj.load()
+        self._save_obj.load(user=self.user.name)
 
         subscribe('change_config_path', self._callback_change_config_path)
         subscribe('change_local_data_path_source', self._update_files)
@@ -103,14 +103,14 @@ class PageSimple(tk.Frame):
 
     def update_page(self):
         self._update_lists()
-        self._save_obj.load(component=self._surfacesoak)
+        self._save_obj.load(component=self._surfacesoak, user=self.user.name)
         self._update_files()
         self._notebook.select_frame('Processering')
 
     def close(self):
         self._close_manual_qc()
         self._ftp_frame.close()
-        self._save_obj.save()
+        self._save_obj.save(user=self.user.name)
 
     def _update_lists(self):
         self._callback_change_config_path()

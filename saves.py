@@ -93,16 +93,20 @@ class Saves:
         with open(self.file_path, 'w') as fid:
             json.dump(self.data, fid, indent=4, sort_keys=True)
 
-    def set(self, key, value):
+    def set(self, user, key, value):
         self._load()
-        self.data[key] = value
+        self.data[self._get_key(user, key)] = value
         self._save()
 
-    def get(self, key, default=''):
-        return self.data.get(key, default)
+    def get(self, user, key, default=''):
+        return self.data.get(self._get_key(user, key), default)
+
+    @staticmethod
+    def _get_key(user, key):
+        return f'{user}-{key}'
 
 
-class SaveSelection:
+class old_SaveSelection:
     _saves = Saves()
     _defaults = Defaults()
     _saves_id_key = ''
@@ -164,7 +168,7 @@ class SaveComponents:
         for comp in args:
             self._components_to_store.add(comp)
 
-    def save(self):
+    def save(self, user='default'):
         data = {}
         for comp in self._components_to_store:
             try:
@@ -176,10 +180,10 @@ class SaveComponents:
                 data[comp._id] = value
             except:
                 pass
-        self._saves.set(self._saves_id_key, data)
+        self._saves.set(user, self._saves_id_key, data)
 
-    def load(self, component=False):
-        data = self._saves.get(self._saves_id_key)
+    def load(self, component=False, user='default'):
+        data = self._saves.get(user, self._saves_id_key)
         components = self._components_to_store
         if component:
             components = [component]
