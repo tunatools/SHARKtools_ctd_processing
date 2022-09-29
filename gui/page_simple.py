@@ -27,6 +27,7 @@ from . import frames
 from ..events import subscribe
 from ..saves import SaveComponents
 from ..utils import open_paths_in_default_program
+from ..utils import get_files_in_directory
 
 logger = logging.getLogger(__name__)
 
@@ -356,6 +357,7 @@ class PageSimple(tk.Frame):
             continue_trying = True
             while continue_trying:
                 try:
+                    print(f'{self._local_data_path_root.value=}')
                     pack = ctd_processing.process_sbe_file(path,
                                                            target_root_directory=self._local_data_path_root.value,
                                                            config_root_directory=self._config_path.value,
@@ -396,7 +398,9 @@ class PageSimple(tk.Frame):
             all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'),
                                                                 with_id_as_key=True, old_key=self._old_key.value)
             packs = []
+            print(f'{all_packs.keys()=}')
             for _id in self._active_ids:
+                print(f'{_id=}')
                 pack = all_packs.get(_id)
                 if not pack:
                     continue
@@ -516,7 +520,6 @@ class PageSimple(tk.Frame):
 
     def _update_files(self, data=None):
         tkw.disable_buttons_in_class(self)
-        # self._button_run.configure(state='disable')
         self._button_run.update_idletasks()
         self._active_ids = []
         self._files_source.update_items([])
@@ -534,23 +537,27 @@ class PageSimple(tk.Frame):
         source_packs = file_explorer.get_packages_in_directory(source_dir, with_id_as_key=True,
                                                                old_key=self._old_key.value, exclude_directory='temp',
                                                                exclude_string='sbe19')
-        local_packs = file_explorer.get_packages_in_directory(local_dir, with_id_as_key=True,
-                                                              old_key=self._old_key.value, exclude_directory='temp',
-                                                              exclude_string='sbe19')
-        server_packs = file_explorer.get_packages_in_directory(server_dir, with_id_as_key=True,
-                                                               old_key=self._old_key.value, exclude_directory='temp',
-                                                               exclude_string='sbe19')
+
+        match_subdir = 'nsf'
+
+        local_files = get_files_in_directory(self.sbe_paths.get_local_directory(match_subdir))
+        server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
+
+        local_keys = {item.split('.')[0].upper(): True for item in local_files}
+        server_keys = {item.split('.')[0].upper(): True for item in server_files}
 
         nr_packs_total = len(source_packs)
         nr_packs_not_local = 0
         nr_packs_not_server = 0
         unprocessed_keys = []
-        for key in source_packs:
-            if key not in local_packs:
+
+        for key, pack in source_packs.items():
+            full_key = pack.key
+            if not local_keys.get(full_key):
                 nr_packs_not_local += 1
-            if key not in server_packs:
+            if not server_keys.get(full_key):
                 nr_packs_not_server += 1
-            if key not in local_packs and key not in server_packs:
+            if not local_keys.get(full_key) and not server_keys.get(full_key):
                 unprocessed_keys.append(key)
 
         self._stringvar_nr_packs_tot.set(nr_packs_total)
@@ -560,6 +567,7 @@ class PageSimple(tk.Frame):
         self._source_patterns_to_id = {}
         self._id_to_source_pack = {}
         self._source_patterns_to_pack = {}
+
         for _id, pack in source_packs.items():
             if _id not in unprocessed_keys:
                 continue
@@ -574,13 +582,7 @@ class PageSimple(tk.Frame):
 
         self._update_ftp_frame()
 
-        # self._button_run.configure(state='normal')
         tkw.enable_buttons_in_class(self)
-
-        # print('='*50)
-        # for key, value in self._source_patterns_to_id.items():
-        #     print(key, value)
-        # raise
 
     def _callback_change_config_path(self, *args):
         logger.debug('=')
