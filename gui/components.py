@@ -266,7 +266,7 @@ class DirectoryButtonText(tk.Frame):
             self.button.bind('<Control-Button-1>', self._on_button_click_hard)
 
     def _open_dialog(self):
-        directory = filedialog.askdirectory()
+        directory = filedialog.askdirectory(title=self.title)
         if not directory:
             return
         directory = Path(directory)
@@ -363,7 +363,7 @@ class FilePathButtonText(tk.Frame):
             self.button.bind('<Control-Button-1>', self._on_button_click_hard)
 
     def _open_dialog(self):
-        path = filedialog.askopenfilename()
+        path = filedialog.askopenfilename(title=self.title)
         if not path:
             return
         path = Path(path)
