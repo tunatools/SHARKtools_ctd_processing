@@ -543,8 +543,8 @@ class PageSimple(tk.Frame):
         local_files = get_files_in_directory(self.sbe_paths.get_local_directory(match_subdir))
         server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
 
-        local_serno = {item.split('.')[0].split('_', 6)[-1]: True for item in local_files}
-        server_serno = {item.split('.')[0].split('_', 6)[-1]: True for item in server_files}
+        local_serno = {item.split('.')[0].split('_', 6)[-1].upper(): True for item in local_files}
+        server_serno = {item.split('.')[0].split('_', 6)[-1].upper(): True for item in server_files}
 
         nr_packs_total = len(source_packs)
         nr_packs_not_local = 0
@@ -552,7 +552,7 @@ class PageSimple(tk.Frame):
         unprocessed_keys = []
 
         for key, pack in source_packs.items():
-            serno = key.split('_', 6)[-1]
+            serno = key.split('_', 6)[-1].upper()
             if not local_serno.get(serno):
                 nr_packs_not_local += 1
             if not server_serno.get(serno):
