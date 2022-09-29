@@ -906,7 +906,7 @@ class PageStart(tk.Frame):
             return
             # raise FileNotFoundError(path)
         # files = ctd_files.get_matching_files_in_directory(self._local_data_path_source.value)
-        files = file_explorer.get_file_names_in_directory(self._local_data_path_source.value, 'hex')
+        files = get_files_in_directory(self._local_data_path_source.value, suffix='.hex')
         self._files_local_source.update_items(sorted(files))
 
     def _update_files_local_raw(self):
