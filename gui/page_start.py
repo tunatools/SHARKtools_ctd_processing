@@ -153,6 +153,10 @@ class PageStart(tk.Frame):
         """ Makes updates relying on local root path being present """
         if not self._local_data_path_root.value:
             if message:
+                messagebox.showwarning('Rotkatalog saknas', f'Lokal rootkatalog saknas!')
+            return False
+        if not self._server_data_path_root.value:
+            if message:
                 messagebox.showwarning('Rotkatalog saknas', f'Server rootkatalog saknas!')
             return False
         self.sbe_paths.set_server_root_directory(self._server_data_path_root.value)
