@@ -343,7 +343,8 @@ class PageSimple(tk.Frame):
         self.sbe_paths.set_server_root_directory(server_root)
 
         active_patterns = self._files_source.get_selected()
-        self._active_ids = [self._source_patterns_to_id[pat] for pat in active_patterns]
+        # self._active_ids = [self._source_patterns_to_id[pat] for pat in active_patterns]
+        self._active_ids = [get_id_from_key(pat) for pat in active_patterns]
         active_paths = [pack.path('hex') for _id, pack in self._id_to_source_pack.items() if _id in self._active_ids]
 
         create_asvp_file = False
@@ -357,7 +358,7 @@ class PageSimple(tk.Frame):
             continue_trying = True
             while continue_trying:
                 try:
-                    print(f'{self._local_data_path_root.value=}')
+                    logger.info(f'{self._local_data_path_root.value=}')
                     pack = ctd_processing.process_sbe_file(path,
                                                            target_root_directory=self._local_data_path_root.value,
                                                            config_root_directory=self._config_path.value,
@@ -396,11 +397,12 @@ class PageSimple(tk.Frame):
     def _create_standard_format(self):
         try:
             all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'),
-                                                                with_id_as_key=True, old_key=self._old_key.value)
+                                                                with_id_as_key=False, old_key=self._old_key.value)
+            all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
             packs = []
-            print(f'{all_packs.keys()=}')
+            logger.info(f'{all_packs.keys()=}')
             for _id in self._active_ids:
-                print(f'{_id=}')
+                logger.info(f'{_id=}')
                 pack = all_packs.get(_id)
                 if not pack:
                     continue
@@ -421,7 +423,8 @@ class PageSimple(tk.Frame):
 
     def _get_active_packs(self):
         all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
-                                                            with_id_as_key=True, old_key=self._old_key.value)
+                                                            with_id_as_key=False, old_key=self._old_key.value)
+        all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
         return [pack for key, pack in all_packs.items() if key in self._active_ids]
 
     def _preform_automatic_qc(self):
@@ -431,6 +434,7 @@ class PageSimple(tk.Frame):
         # print(all_packs.keys())
         # print(self._active_ids)
         files = [pack['txt'] for pack in packs]
+        logger.info(f'{files=}')
         if not files:
             messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
             return
@@ -461,6 +465,7 @@ class PageSimple(tk.Frame):
             return data_path
         except Exception:
             messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+            raise
 
     def _open_manual_qc(self):
         tkw.enable_buttons_in_class(self)
@@ -505,14 +510,20 @@ class PageSimple(tk.Frame):
         return image_paths
 
     def _copy_files_to_server(self):
-        local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), with_id_as_key=True,
+
+        local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
+                                                              with_id_as_key=False,
                                                               old_key=self._old_key.value, exclude_directory='temp')
+        local_packs = {get_id_from_key(key): pack for key, pack in local_packs.items()}
+
+        logger.info(f'{self._active_ids=}')
         for _id in self._active_ids:
             pack = local_packs.get(_id)
             if not pack:
                 messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inga filer att kopiera...')
                 return
-            if 'test' in pack.pattern:
+            if 'test' in pack.pattern.lower():
+                logger.warning(f'TEST package not copied to server: {pack} ')
                 continue
             handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_pack(pack)
@@ -521,6 +532,7 @@ class PageSimple(tk.Frame):
     def _update_files(self, data=None):
         tkw.disable_buttons_in_class(self)
         self._button_run.update_idletasks()
+        self._source_ids = []
         self._active_ids = []
         self._files_source.update_items([])
 
@@ -543,8 +555,9 @@ class PageSimple(tk.Frame):
         local_files = get_files_in_directory(self.sbe_paths.get_local_directory(match_subdir))
         server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
 
-        local_serno = {item.split('.')[0].split('_', 6)[-1].upper(): True for item in local_files}
-        server_serno = {item.split('.')[0].split('_', 6)[-1].upper(): True for item in server_files}
+        self._source_ids = {get_id_from_key(item): True for item in source_packs}
+        local_serno = {get_id_from_key(item): True for item in local_files}
+        server_serno = {get_id_from_key(item): True for item in server_files}
 
         nr_packs_total = len(source_packs)
         nr_packs_not_local = 0
@@ -552,7 +565,7 @@ class PageSimple(tk.Frame):
         unprocessed_keys = []
 
         for key, pack in source_packs.items():
-            serno = key.split('_', 6)[-1].upper()
+            serno = get_id_from_key(key)
             if not local_serno.get(serno):
                 nr_packs_not_local += 1
             if not server_serno.get(serno):
@@ -566,13 +579,14 @@ class PageSimple(tk.Frame):
 
         self._source_patterns_to_id = {}
         self._id_to_source_pack = {}
-        self._source_patterns_to_pack = {}
+        # self._source_patterns_to_pack = {}
 
-        for _id, pack in source_packs.items():
-            if _id not in unprocessed_keys:
+        for key, pack in source_packs.items():
+            if key not in unprocessed_keys:
                 continue
+            _id = get_id_from_key(key)
             self._id_to_source_pack[_id] = pack
-            self._source_patterns_to_pack[pack.pattern] = pack
+            # self._source_patterns_to_pack[pack.pattern] = pack
             self._source_patterns_to_id[pack.pattern] = _id
 
         keys = sorted(self._source_patterns_to_id)
@@ -613,4 +627,8 @@ class PageSimple(tk.Frame):
         if not nsf_path:
             return
         self._ftp_frame.update_frame()
+
+
+def get_id_from_key(key):
+    return key.split('.')[0].split('_', 6)[-1].upper()
 

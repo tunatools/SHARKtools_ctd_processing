@@ -564,6 +564,7 @@ class PageStart(tk.Frame):
         if not files:
             messagebox.showwarning('Automatisk granskning', 'Valda filer är redan granskade idag. \nIngen granskning gjord!')
             return
+        logger.info(f'{files=}')
 
         tkw.disable_buttons_in_class(self)
         try:
@@ -595,6 +596,7 @@ class PageStart(tk.Frame):
             return data_path
         except Exception:
             messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+            raise
         finally:
             tkw.enable_buttons_in_class(self)
 
