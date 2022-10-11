@@ -1,3 +1,4 @@
+import logging
 import shutil
 import time
 import tkinter as tk
@@ -7,27 +8,24 @@ from tkinter import messagebox
 
 import ctd_processing
 import file_explorer
-from ctd_processing import exceptions
 from ctd_processing import file_handler
-from ctd_processing import standard_format
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
-from ctd_processing.standard_format import StandardFormatComments
 from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
+from profileqc import qc
 from sharkpylib.plot import create_seabird_like_plots_for_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
-import logging
 
 from . import components
 from . import frames
 from ..events import subscribe
 from ..saves import SaveComponents
-from ..utils import open_paths_in_default_program
 from ..utils import get_files_in_directory
+from ..utils import open_paths_in_default_program
 
 logger = logging.getLogger(__name__)
 
@@ -448,8 +446,8 @@ class PageSimple(tk.Frame):
 
             for data_key, item in datasets[0].items():
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-                qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
-                qc_run()
+                qc_session = qc.SessionQC(data_item=item, parameter_mapping=parameter_mapping)
+                qc_session.run()
 
             data_path = session.save_data(datasets,
                                           writer='ctd_standard_template', return_data_path=True,

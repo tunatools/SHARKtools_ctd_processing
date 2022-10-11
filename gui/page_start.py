@@ -3,7 +3,6 @@
 #
 # Copyright (c) 2018 SMHI, Swedish Meteorological and Hydrological Institute
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
-import json
 import logging
 import shutil
 import time
@@ -23,9 +22,8 @@ from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
-from sharkpylib import ftp
+from profileqc import qc
 from sharkpylib import plot
-from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
 
 from . import components
@@ -579,8 +577,8 @@ class PageStart(tk.Frame):
 
             for data_key, item in datasets[0].items():
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-                qc_run = QCBlueprint(item, parameter_mapping=parameter_mapping)
-                qc_run()
+                qc_session = qc.SessionQC(data_item=item, parameter_mapping=parameter_mapping)
+                qc_session.run()
 
             data_path = session.save_data(datasets,
                                           writer='ctd_standard_template', return_data_path=True,
