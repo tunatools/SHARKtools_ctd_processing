@@ -621,6 +621,7 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.config(state='normal')
         self._button_close_manual_qc.config(bg=self._button_bg_color)
         self._update_files_local_nsf()
+        self._update_ftp_frame()
         if self._create_plots_option.get():
             self._create_plots()
         self._notebook_local.select_frame('Standardformat')
@@ -947,8 +948,6 @@ class PageStart(tk.Frame):
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_selected()
-        # self._update_files_local_ftp()
-        self._update_ftp_frame()
         if self.sbe_paths.get_server_directory('root'):
             self._update_files_local_nsf_not_on_server()
 
@@ -1073,6 +1072,7 @@ class PageStart(tk.Frame):
         self._update_files_local_nsf_selected()
         self._update_files_local_nsf_not_on_server()
         self._update_files_local_nsf_not_updated_on_server()
+        self._update_ftp_frame()
 
     def _update_all_server(self):
         self._update_server_data_directories()
