@@ -25,6 +25,7 @@ from file_explorer.seabird import paths
 from profileqc import qc
 from sharkpylib import plot
 from sharkpylib.tklib import tkinter_widgets as tkw
+from profileqc.specific import get_specific_qc_settings
 
 from . import components
 from . import frames
@@ -575,10 +576,30 @@ class PageStart(tk.Frame):
 
             datasets = session.read()
 
-            for data_key, item in datasets[0].items():
+            qc_session = qc.SessionQC(None, advanced_settings_name='smhi_expedition')
+
+            for dset_name, item in datasets[0].items():
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-                qc_session = qc.SessionQC(data_item=item, parameter_mapping=parameter_mapping)
+                qc_session.update_data(item,
+                                       parameter_mapping=parameter_mapping,
+                                       dataset_name=dset_name)
+                qc_session.update_routines()
                 qc_session.run()
+
+            qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'qc_log.yaml'), reset_log=True)
+
+
+            # for data_key, item in datasets[0].items():
+            #     parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
+            #     routine_settings = get_specific_qc_settings(
+            #         user='svea',
+            #         lat=item['data']['LATITUDE_DD'][0],
+            #         lon=item['data']['LONGITUDE_DD'][0],
+            #         month=item['data']['MONTH'][0])
+            #     qc_session = qc.SessionQC(data_item=item,
+            #                               parameter_mapping=parameter_mapping,
+            #                               routine_settings=routine_settings)
+            #     qc_session.run()
 
             data_path = session.save_data(datasets,
                                           writer='ctd_standard_template', return_data_path=True,

@@ -16,6 +16,7 @@ from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
 from profileqc import qc
+from profileqc.specific import get_specific_qc_settings
 from sharkpylib.plot import create_seabird_like_plots_for_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
@@ -427,10 +428,6 @@ class PageSimple(tk.Frame):
 
     def _preform_automatic_qc(self):
         packs = self._get_active_packs()
-        # all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
-        #                                                     with_id_as_key=True, old_key=self._old_key.value)
-        # print(all_packs.keys())
-        # print(self._active_ids)
         files = [pack['txt'] for pack in packs]
         logger.info(f'{files=}')
         if not files:
@@ -444,10 +441,31 @@ class PageSimple(tk.Frame):
 
             datasets = session.read()
 
-            for data_key, item in datasets[0].items():
+            qc_session = qc.SessionQC(None, advanced_settings_name='smhi_expedition')
+
+            for dset_name, item in datasets[0].items():
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
-                qc_session = qc.SessionQC(data_item=item, parameter_mapping=parameter_mapping)
+                qc_session.update_data(item,
+                                       parameter_mapping=parameter_mapping,
+                                       dataset_name=dset_name)
+                qc_session.update_routines()
                 qc_session.run()
+
+            qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'qc_log.yaml'), reset_log=True)
+
+            # datasets = session.read()
+            #
+            # for data_key, item in datasets[0].items():
+            #     parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
+            #     routine_settings = get_specific_qc_settings(
+            #         user='svea',
+            #         lat=item['data']['LATITUDE_DD'][0],
+            #         lon=item['data']['LONGITUDE_DD'][0],
+            #         month=item['data']['MONTH'][0])
+            #     qc_session = qc.SessionQC(data_item=item,
+            #                               parameter_mapping=parameter_mapping,
+            #                               routine_settings=routine_settings)
+            #     qc_session.run()
 
             data_path = session.save_data(datasets,
                                           writer='ctd_standard_template', return_data_path=True,
