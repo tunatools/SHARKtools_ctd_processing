@@ -449,7 +449,7 @@ class PageSimple(tk.Frame):
                 qc_session.update_data(item,
                                        parameter_mapping=parameter_mapping,
                                        dataset_name=dset_name)
-                qc_session.update_routines()
+                # qc_session.update_routines()
                 qc_session.run()
 
             qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'automatic_qc_log.yaml'),
