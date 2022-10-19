@@ -441,7 +441,8 @@ class PageSimple(tk.Frame):
 
             datasets = session.read()
 
-            qc_session = qc.SessionQC(None, advanced_settings_name='smhi_expedition')
+            # qc_session = qc.SessionQC(None, advanced_settings_name='smhi_expedition')
+            qc_session = qc.SessionQC(None)
 
             for dset_name, item in datasets[0].items():
                 parameter_mapping = get_reversed_dictionary(session.settings.pmap, item['data'].keys())
@@ -451,7 +452,8 @@ class PageSimple(tk.Frame):
                 qc_session.update_routines()
                 qc_session.run()
 
-            qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'qc_log.yaml'), reset_log=True)
+            qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'automatic_qc_log.yaml'),
+                                 reset_log=True)
 
             # datasets = session.read()
             #
