@@ -25,7 +25,7 @@ from file_explorer.seabird import paths
 from profileqc import qc
 from sharkpylib import plot
 from sharkpylib.tklib import tkinter_widgets as tkw
-from profileqc.specific import get_specific_qc_settings
+# from profileqc.specific import get_specific_qc_settings
 
 from . import components
 from . import frames

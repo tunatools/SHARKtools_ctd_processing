@@ -16,7 +16,7 @@ from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
 from file_explorer.seabird import paths
 from profileqc import qc
-from profileqc.specific import get_specific_qc_settings
+# from profileqc.specific import get_specific_qc_settings
 from sharkpylib.plot import create_seabird_like_plots_for_package
 from sharkpylib.qc.qc_default import QCBlueprint
 from sharkpylib.tklib import tkinter_widgets as tkw
