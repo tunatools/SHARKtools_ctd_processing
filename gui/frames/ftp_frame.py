@@ -214,7 +214,8 @@ class FtpFrame(tk.Frame):
     def _update_items(self):
         if not self._local_data_path_ftp.get():
             return
-        directory = Path(self._local_data_path_ftp.get())
+        directory = Path(self._local_data_path_ftp.get()).resolve()
+        print(f'{directory=}')
         if not directory.exists():
             return
         items = sorted([path.name for path in directory.iterdir()], reverse=True)
