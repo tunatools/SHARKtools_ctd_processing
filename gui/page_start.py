@@ -188,7 +188,7 @@ class PageStart(tk.Frame):
         self._update_files_local_raw()
         self._update_files_local_cnv()
         self._update_files_local_qc()
-        self._update_files_local_nsf()
+        self._update_files_local_nsf() # here 9
 
     def _clear_local_file_lists(self):
         self._files_local_raw.update_items([])
@@ -656,7 +656,7 @@ class PageStart(tk.Frame):
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
         if not selected:
-            self._callback_change_year()
+            # self._callback_change_year() # here 6 in
             return
         last_selected = selected[-1]
         if not last_selected.startswith('SBE'):
@@ -815,7 +815,7 @@ class PageStart(tk.Frame):
             # self.standard_format = standard_format.CreateStandardFormat(paths_object=self.sbe_paths)
             # self.standard_format.create_files_from_cnv(cnv_files, overwrite=self._overwrite.value)
             self._update_files_local_qc()
-            self._update_files_local_nsf()
+            self._update_files_local_nsf() # here:1
             self._update_server_info()
 
             self._converted_files = [path.stem for path in cnv_files]
@@ -890,7 +890,7 @@ class PageStart(tk.Frame):
         self.sbe_paths.set_local_root_directory(path)
         # self._set_proper_local_root_path()
         self._update_local_data_directories()
-        self._update_local_file_lists()
+        self._update_local_file_lists() # here 8
 
     def _callback_change_server_root_directory(self, *args):
         """ Called when the the server root directory is changed """
@@ -969,7 +969,7 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
-        self._update_files_local_nsf_selected()
+        self._update_files_local_nsf_selected() # here 2
         if self.sbe_paths.get_server_directory('root'):
             self._update_files_local_nsf_not_on_server()
 
@@ -1021,7 +1021,7 @@ class PageStart(tk.Frame):
         for file in all_files:
             if Path(file).stem in file_stems:
                 select.append(file)
-        self._files_local_nsf_select.deselect_all()
+        self._files_local_nsf_select.deselect_all() # here 3
         self._files_local_nsf_select.move_items_to_selected(select)
 
     def _update_local_data_directories(self):
@@ -1055,7 +1055,7 @@ class PageStart(tk.Frame):
         if not year:
             return
         self.sbe_paths.set_year(year)
-        self._callback_change_local_root_directory()
+        self._callback_change_local_root_directory() # here 7
         self._update_all_server()
 
     def _create_plots(self, with_config=False):
