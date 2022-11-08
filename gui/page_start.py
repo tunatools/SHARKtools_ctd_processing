@@ -165,7 +165,6 @@ class PageStart(tk.Frame):
         return True
 
     def update_page(self):
-        print(f'{self.user=}')
         self._save_obj.load(user=self.user.name)
         self._make_config_root_updates(message=False)
         self._make_local_root_updates(message=False)
@@ -554,7 +553,7 @@ class PageStart(tk.Frame):
         for name in file_names:
             handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_file(name)
-            local_file_path = handler.get_local_file_path('nsf')
+            local_file_path = handler.get_local_file_path(subdir='nsf', suffix='.txt')
             if not local_file_path:
                 continue
             if not self._intvar_allow_automatic_qc_same_day.get():
@@ -575,7 +574,6 @@ class PageStart(tk.Frame):
                                             reader='ctd_stdfmt')
 
             datasets = session.read()
-
             # qc_session = qc.SessionQC(None, advanced_settings_name='smhi_expedition')
             qc_session = qc.SessionQC(None)
 
@@ -956,7 +954,7 @@ class PageStart(tk.Frame):
 
     def _update_files_local_qc(self):
         files = get_files_in_directory(self._local_data_path_qc.value)
-        self._files_local_qc.update_items(files)
+        self._files_local_qc.update_items([file for file in files if file.endswith('.txt')])
         self._files_local_qc.deselect_all()
         all_txt_files = {}
         for item in self._files_local_qc.get_all_items():
