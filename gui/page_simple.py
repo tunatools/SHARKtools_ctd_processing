@@ -375,7 +375,8 @@ class PageSimple(tk.Frame):
                     continue_trying = False
                 except FileExistsError:
                     messagebox.showerror('File exists',
-                                         f'Could not overwrite file. Select overwrite and try again.\n{path}')
+                                         f'Filen finns redan. Använd avancerad processering om du vill processera igen\
+                                         n{path}')
                     return
                 except file_explorer.seabird.MismatchWarning as e:
                     ans = messagebox.askyesnocancel('Mismatch mellan filer',
