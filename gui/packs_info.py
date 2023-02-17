@@ -196,7 +196,7 @@ class PacksInfo(tk.Frame):
     @staticmethod
     def _get_packs_info(packs_list):
         if not packs_list:
-            return
+            return {}
         nr_files = {}
         compilation = {}
         time_format = '%Y-%m-%d %H:%M:%S (%A vecka %W)'

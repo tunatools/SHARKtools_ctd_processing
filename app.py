@@ -19,6 +19,7 @@ ALL_PAGES = dict()
 ALL_PAGES['PageStart'] = gui.PageStart
 ALL_PAGES['PageInspect'] = gui.PageInspect
 ALL_PAGES['PageSimple'] = gui.PageSimple
+ALL_PAGES['PageEditRaw'] = gui.PageEditRaw
 
 APP_TO_PAGE = dict()
 for page_name, page in ALL_PAGES.items():

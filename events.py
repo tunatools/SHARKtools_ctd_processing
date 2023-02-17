@@ -10,21 +10,26 @@ class InvalidEventType(Exception):
 
 class EventTypes:
     def __init__(self):
-        self.event_types = ['select_platform',
-                            'select_surfacesoak',
-                            'change_local_data_path_source',
-                            'change_local_data_path_root',
-                            'change_config_path',
-                            'change_server_data_path_root',
-                            'change_tau',
-                            'change_overwrite',
-                            'change_simple_old_key',
-                            'update_series_local_source',
-                            'change_local_data_path_raw',
-                            'change_year',
-                            'change_ftp_credentials_path',
-                            'goto_pre_system_svea'
-                            ]
+        self.event_types = [
+            'select_platform',
+            'select_surfacesoak',
+            'change_local_data_path_source',
+            'change_local_data_path_root',
+            'change_config_path',
+            'change_server_data_path_root',
+            'change_tau',
+            'change_overwrite',
+            'change_simple_old_key',
+            'update_series_local_source',
+            'change_local_data_path_raw',
+            'change_year',
+            'change_ftp_credentials_path',
+            'goto_pre_system_svea',
+            'change_metadata_packs_source',
+            'change_metadata_packs_target',
+            'change_metadata_packs_sharkweb_path',
+            'change_metadata_packs_lims_path',
+        ]
 
         for item in self.event_types:
             setattr(self, item, item)

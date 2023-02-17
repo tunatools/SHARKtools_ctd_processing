@@ -58,8 +58,8 @@ class PageInspect(tk.Frame):
     def startup(self):
         self._build()
         self._add_to_save()
-        self._on_select_source_dir()
-        self._on_select_local_dir()
+        # self._on_select_source_dir()
+        # self._on_select_local_dir()
 
     def _add_to_save(self):
         self._saves.add_components(*list(self._stringvars_path.values()))
@@ -188,6 +188,7 @@ class PageInspect(tk.Frame):
         ctd_config_path = self._stringvars_path['ctd_config_dir'].get()
         sharkweb_path = self._stringvars_path['sharkweb_path'].get() or None
         mprog = self._stringvar_mprog.get().strip() or None
+
         if not packs:
             messagebox.showwarning('Skapa standardformat', 'Inga paket valda!')
             return

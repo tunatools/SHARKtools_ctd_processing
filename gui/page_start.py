@@ -102,6 +102,7 @@ class PageStart(tk.Frame):
         subscribe('change_server_data_path_root', self._callback_change_server_root_directory)
         subscribe('update_series_local_source', self._callback_update_series_local_source)
         subscribe('change_year', self._callback_change_year)
+        subscribe('change_tau', self._callback_change_tau)
 
         subscribe('select_platform', self._callback_select_platform)
 
@@ -966,8 +967,8 @@ class PageStart(tk.Frame):
         self._files_local_qc.move_items_to_selected(select_files)
 
     def _update_files_local_nsf(self):
-        self._update_files_local_nsf_all()
-        self._update_files_local_nsf_selected() # here 2
+        files = self._update_files_local_nsf_all()
+        self._update_files_local_nsf_selected(files) # here 2
         if self.sbe_paths.get_server_directory('root'):
             self._update_files_local_nsf_not_on_server()
 
@@ -977,9 +978,10 @@ class PageStart(tk.Frame):
         selected_keys = [key for key in all_keys if key in self._converted_files]
         self._ftp_frame.move_keys_to_selected(selected_keys)
 
-    def _update_files_local_nsf_all(self):
-        files = get_files_in_directory(self._local_data_path_nsf.value)
-        self._files_local_nsf_all.update_items(files[:])
+    def _update_files_local_nsf_all(self, files=None):
+        files = files or get_files_in_directory(self._local_data_path_nsf.value)[:]
+        self._files_local_nsf_all.update_items(files)
+        return files
 
     def _update_files_local_nsf_not_on_server(self):
         files = get_files_in_directory(self._local_data_path_nsf.value)
@@ -1007,7 +1009,7 @@ class PageStart(tk.Frame):
                 continue
         self._files_local_nsf_not_updated.update_items(not_updated_on_server)
 
-    def _update_files_local_nsf_selected(self):
+    def _update_files_local_nsf_selected(self, files=None):
         files = get_files_in_directory(self._local_data_path_nsf.value)
         self._files_local_nsf_select.update_items(files)
         # Move to selected
@@ -1055,6 +1057,13 @@ class PageStart(tk.Frame):
         self.sbe_paths.set_year(year)
         self._callback_change_local_root_directory() # here 7
         self._update_all_server()
+
+    def _callback_change_tau(self, value):
+        if not value:
+            return
+        ok = messagebox.askyesno('Aktivera tau', 'Är du säker på att du vill aktivera tau-korrektion?')
+        if not ok:
+            self._tau.value = False
 
     def _create_plots(self, with_config=False):
         directory = self.sbe_paths.get_local_directory('nsf')
