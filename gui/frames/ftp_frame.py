@@ -22,13 +22,14 @@ LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka'
 
 class FtpFrame(tk.Frame):
 
-    def __init__(self, *args, sbe_paths=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._listbox_prop = {'width': 45, 'height': 6}
         self._listbox_prop.update(kwargs.get('listbox_prop', {}))
-        self._sbe_paths = sbe_paths
         super().__init__(*args, **kwargs)
 
         self._save_obj = SaveComponents(key='ftp')
+
+        self._file_handler = None
 
         self._build()
         self._save_obj.add_components(
@@ -40,6 +41,9 @@ class FtpFrame(tk.Frame):
         subscribe('change_ftp_credentials_path', self._update_files_ftp)
 
         self._update_files_ftp()
+
+    def set_file_handler(self, handler):
+        self._file_handler = handler
 
     def close(self):
         self._save_obj.save()
@@ -133,7 +137,7 @@ class FtpFrame(tk.Frame):
         self._files_on_ftp.update_items(file_list)
 
     def update_frame(self):
-        self._local_data_path_ftp.set(path=self._sbe_paths.get_local_directory('nsf'))
+        self._local_data_path_ftp.set(path=self._file_handler.get_dir('local', 'nsf'))
         self._update_items()
         self._on_toggle_ftp_test()
 
@@ -203,7 +207,7 @@ class FtpFrame(tk.Frame):
             return []
         matching_paths = []
         file_stems = [name.split('.')[0] for name in file_names]
-        for path in self._sbe_paths.get_local_directory('cnv').iterdir():
+        for path in self._file_handler.get_files('local', 'cnv').values():
             if path.suffix != '.cnv':
                 continue
             if path.stem not in file_stems:

@@ -13,7 +13,6 @@ from tkinter import messagebox
 import ctd_processing
 import file_explorer
 from file_explorer.seabird.paths import SBEPaths
-from ctd_processing import file_handler
 from sharkpylib.tklib import tkinter_widgets as tkw
 
 from ..saves import SaveComponents
