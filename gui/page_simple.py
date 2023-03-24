@@ -5,16 +5,17 @@ import tkinter as tk
 import traceback
 from pathlib import Path
 from tkinter import messagebox
+import datetime
 
 import ctd_processing
 import file_explorer
-from ctd_processing import file_handler
+from file_explorer.file_handler.exceptions import RootDirectoryNotSetError
+from file_explorer.file_handler.seabird_ctd import get_seabird_file_handler
 from ctd_processing.processing.sbe_processing import SBEProcessing
 from ctd_processing.processing.sbe_processing_paths import SBEProcessingPaths
 from ctd_processing.visual_qc.vis_qc import VisQC
 from ctdpy.core import session as ctdpy_session
 from ctdpy.core.utils import get_reversed_dictionary
-from file_explorer.seabird import paths
 from profileqc import qc
 # from profileqc.specific import get_specific_qc_settings
 from sharkpylib.plot import create_seabird_like_plots_for_package
@@ -48,12 +49,6 @@ class PageSimple(tk.Frame):
 
         self._save_obj = SaveComponents(key='ctd_processing_simple')
 
-        self.sbe_paths = paths.SBEPaths()
-        self.sbe_processing_paths = SBEProcessingPaths(self.sbe_paths)
-
-        self.sbe_processing = SBEProcessing(sbe_paths=self.sbe_paths,
-                                            sbe_processing_paths=self.sbe_processing_paths)
-
         self.bokeh_server = None
 
         self._unprocessed_packs = {}
@@ -70,6 +65,10 @@ class PageSimple(tk.Frame):
         self._stringvar_nr_packs_missing_local = tk.StringVar()
         self._stringvar_nr_packs_missing_server = tk.StringVar()
         self._stringvar_nr_packs_missing_tot = tk.StringVar()
+
+        self._file_handlers = {}
+        self._sbe_processing_paths = {}
+        self._sbe_processing_objs = {}
 
     @property
     def user(self):
@@ -94,6 +93,7 @@ class PageSimple(tk.Frame):
 
         self._save_obj.load(user=self.user.name)
 
+        subscribe('change_year', self._callback_change_year)
         subscribe('change_config_path', self._callback_change_config_path)
         subscribe('change_local_data_path_source', self._update_files)
         subscribe('change_local_data_path_root', self._update_files)
@@ -102,6 +102,9 @@ class PageSimple(tk.Frame):
         subscribe('select_platform', self._callback_select_platform)
 
     def update_page(self):
+        if not self.year:
+            return
+        self._callback_change_year()
         self._update_lists()
         self._save_obj.load(component=self._surfacesoak, user=self.user.name)
         self._update_files()
@@ -113,9 +116,12 @@ class PageSimple(tk.Frame):
         self._save_obj.save(user=self.user.name)
 
     def _update_lists(self):
-        self._callback_change_config_path()
-        self._callback_select_platform()
-        self._update_surfacesaok_list()
+        try:
+            self._callback_change_config_path()
+            self._callback_select_platform()
+            self._update_surfacesaok_list()
+        except RootDirectoryNotSetError:
+            pass
 
     def _build_frame(self):
         layout = dict(padx=20,
@@ -159,7 +165,7 @@ class PageSimple(tk.Frame):
         layout = dict(padx=20,
                       pady=20,
                       sticky='nsew')
-        self._ftp_frame = frames.FtpFrame(frame, sbe_paths=self.sbe_paths)
+        self._ftp_frame = frames.FtpFrame(frame)
         self._ftp_frame.grid(row=0, column=0, **layout)
 
         tkw.grid_configure(frame)
@@ -201,6 +207,9 @@ class PageSimple(tk.Frame):
         self._delete_old_asvp_files = components.Checkbutton(frame, 'delete_old_asvp_files', title='Ta bort gamla asvp-filer', row=r,
                                                column=0, **layout)
 
+        r += 1
+        self._year = components.YearEntry(frame, 'year', title='År', row=r, column=0, **layout)
+        self._year.set(str(datetime.datetime.now().year))
 
         r += 1
         self._button_update = tk.Button(self._frame_paths, text='Uppdatera',
@@ -361,6 +370,7 @@ class PageSimple(tk.Frame):
                     pack = ctd_processing.process_sbe_file(path,
                                                            target_root_directory=self._local_data_path_root.value,
                                                            config_root_directory=self._config_path.value,
+                                                           file_handler=self.file_handler,
                                                            platform=self._platform.value,
                                                            surfacesoak=self._surfacesoak.value,
                                                            # tau=self._tau.value,
@@ -550,9 +560,11 @@ class PageSimple(tk.Frame):
 
     def _update_files(self, data=None):
         tkw.disable_buttons_in_class(self)
+
         self._button_run.update_idletasks()
-        self._source_ids = []
         self._active_ids = []
+        self._source_serno_to_file_paths = {}
+        self._source_patterns_to_serno = {}
         self._files_source.update_items([])
 
         source_dir = self._local_data_path_source.value
@@ -562,35 +574,49 @@ class PageSimple(tk.Frame):
         if not all([source_dir, local_dir, server_dir]):
             return
 
-        self.sbe_paths.set_local_root_directory(local_dir)
-        self.sbe_paths.set_server_root_directory(server_dir)
+        self.update_file_handler()
 
-        source_packs = file_explorer.get_packages_in_directory(source_dir, with_id_as_key=False,
-                                                               old_key=self._old_key.value, exclude_directory='temp',
-                                                               exclude_string='sbe19')
+
+
+        # files = self.file_handler.get_files('local', 'raw', suffixes=['.hex'])
+
+
+
+        # source_packs = file_explorer.get_packages_in_directory(source_dir,
+        #                                                        with_id_as_key=False,
+        #                                                        old_key=self._old_key.value, exclude_directory='temp',
+        #                                                        exclude_string='sbe19')
 
         match_subdir = 'raw'
 
-        local_files = get_files_in_directory(self.sbe_paths.get_local_directory(match_subdir))
-        server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
+        all_source_paths = self.file_handler.get_files('source', 'root')
+        local_files = self.file_handler.get_file_names('local', 'raw', suffixes=['.hex'])
+        server_files = self.file_handler.get_file_names('server', 'raw', suffixes=['.hex'])
+        # server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
 
-        self._source_ids = {get_id_from_key(item): True for item in source_packs}
+        for path in all_source_paths:
+            serno = get_id_from_key(path.name)
+            self._sbe_processing_paths.setdefault(serno, [])
+            self._sbe_processing_paths[serno].append(path)
+            self._source_patterns_to_serno[path.stem] = serno
+
+        # self._source_ids = {get_id_from_key(item): True for item in source_packs}
         local_serno = {get_id_from_key(item): True for item in local_files}
         server_serno = {get_id_from_key(item): True for item in server_files}
 
-        nr_packs_total = len(source_packs)
+        nr_packs_total = len(self._source_serno_to_file_paths)
         nr_packs_not_local = 0
         nr_packs_not_server = 0
-        unprocessed_keys = []
+        unprocessed_sernos = []
 
-        for key, pack in source_packs.items():
-            serno = get_id_from_key(key)
+        # for key, pack in source_packs.items():
+        for serno in self._source_serno_to_file_paths:
             if not local_serno.get(serno):
                 nr_packs_not_local += 1
             if not server_serno.get(serno):
                 nr_packs_not_server += 1
             if not local_serno.get(serno) and not server_serno.get(serno):
-                unprocessed_keys.append(key)
+                unprocessed_sernos.append(serno)
 
         self._stringvar_nr_packs_tot.set(nr_packs_total)
         self._stringvar_nr_packs_missing_local.set(nr_packs_not_local)
@@ -600,13 +626,6 @@ class PageSimple(tk.Frame):
         self._id_to_source_pack = {}
         # self._source_patterns_to_pack = {}
 
-        for key, pack in source_packs.items():
-            if key not in unprocessed_keys:
-                continue
-            _id = get_id_from_key(key)
-            self._id_to_source_pack[_id] = pack
-            # self._source_patterns_to_pack[pack.pattern] = pack
-            self._source_patterns_to_id[pack.pattern] = _id
 
         keys = sorted(self._source_patterns_to_id)
         self._stringvar_nr_packs_missing_tot.set(len(unprocessed_keys))
@@ -619,7 +638,7 @@ class PageSimple(tk.Frame):
 
     def _callback_change_config_path(self, *args):
         logger.debug('=')
-        self.sbe_paths.set_config_root_directory(self._config_path.value)
+        self._update_file_handler_config()
         self._update_surfacesaok_list()
         self._update_platform_list()
 
@@ -642,10 +661,99 @@ class PageSimple(tk.Frame):
         self._update_surfacesaok_list()
 
     def _update_ftp_frame(self):
-        nsf_path = self.sbe_paths.get_local_directory('nsf')
+        nsf_path = self.file_handler.get_dir('local', 'nsf')
         if not nsf_path:
             return
         self._ftp_frame.update_frame()
+
+    @property
+    def year(self):
+        return self._year.get()
+
+    @property
+    def file_handler(self):
+        year = self._year.get()
+        if not year:
+            messagebox.showinfo('Inget år', 'Inget år är valt för processeringen')
+            return
+        return self._file_handlers.setdefault(year, get_seabird_file_handler(year=year))
+
+    @property
+    def sbe_processing_paths(self):
+        return self._sbe_processing_paths.setdefault(self.year, SBEProcessingPaths(self.file_handler))
+
+    @property
+    def sbe_processing(self):
+        return self._sbe_processing_objs.setdefault(self.year,
+                                                    SBEProcessing(
+                                                        sbe_paths=self.file_handler,
+                                                        sbe_processing_paths=self.sbe_processing_paths
+                                                    )
+                                                    )
+
+    def _callback_change_year(self, *args):
+        year = self._year.value
+        if not year:
+            return
+        self.update_file_handler()
+
+    def update_file_handler(self):
+
+        handler = self.file_handler
+        # Update paths
+
+        self._update_file_handler_source(handler)
+        self._update_file_handler_config(handler)
+        self._update_file_handler_local(handler)
+        self._update_file_handler_server(handler)
+
+        try:
+            self.sbe_processing_paths.update_paths()
+        except RootDirectoryNotSetError:
+            pass
+        self._ftp_frame.set_file_handler(handler)
+
+        return handler
+
+    def _update_file_handler_source(self, handler=None):
+        handler = handler or self.file_handler
+        try:
+            handler.set_root_dir('source', self._local_data_path_source.value)
+            handler.store_files('source')
+            handler.monitor_root_dir('source')
+        except RootDirectoryNotSetError:
+            pass
+
+    def _update_file_handler_local(self, handler=None):
+        handler = handler or self.file_handler
+        try:
+            handler.set_root_dir('local', self._local_data_path_root.value)
+            handler.create_dirs('local')
+            handler.store_files('local')
+            handler.monitor_root_dir('local')
+        except RootDirectoryNotSetError:
+            pass
+        except Exception:
+            raise
+
+    def _update_file_handler_server(self, handler=None):
+        handler = handler or self.file_handler
+        try:
+            handler.set_root_dir('server', self._server_data_path_root.value)
+            handler.create_dirs('server')
+            handler.store_files('server')
+            handler.monitor_root_dir('server')
+        except RootDirectoryNotSetError:
+            pass
+
+    def _update_file_handler_config(self, handler=None):
+        handler = handler or self.file_handler
+        try:
+            handler.set_root_dir('config', self._config_path.value)
+            handler.store_files('config')
+            handler.monitor_root_dir('config')
+        except RootDirectoryNotSetError:
+            pass
 
 
 def get_id_from_key(key):
