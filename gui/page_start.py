@@ -99,7 +99,11 @@ class PageStart(tk.Frame):
         self._update_file_handler_local(handler)
         self._update_file_handler_server(handler)
         
-        self.sbe_processing_paths.update_paths()
+        try:
+            self.sbe_processing_paths.update_paths()
+        except RootDirectoryNotSetError:
+            pass
+
         self._ftp_frame.set_file_handler(handler)
 
         return handler
@@ -203,9 +207,6 @@ class PageStart(tk.Frame):
 
         self._callback_change_year()
         # self.update_file_handler()
-
-        self._update_local_data_directories()
-        self._update_server_data_directories()
 
         self._make_config_root_updates(message=False)
         # self._make_local_root_updates(message=False)
@@ -578,7 +579,7 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
         r += 1
-        self._button_open_manual_qc = tk.Button(right_frame, text='2) Öppna manuell granskning (alla filer)',
+        self._button_open_manual_qc = tk.Button(right_frame, text='2) Öppna manuell granskning',
                                                 command=self._callback_start_manual_qc)
         self._button_open_manual_qc.grid(row=r, column=0, padx=5, pady=2, sticky='se')
 
@@ -768,6 +769,8 @@ class PageStart(tk.Frame):
             return
         self.root_app.open_progress_window()
         self.update_file_handler()
+        self._update_local_data_directories()
+        self._update_server_data_directories()
         self.root_app.close_progress_window()
 
     def _callback_change_tau(self, value):
@@ -921,14 +924,14 @@ class PageStart(tk.Frame):
                                                               old_key=self._old_key.value)
             new_packs = ctd_processing.create_standard_format_for_packages(packs,
                                                                            file_handler=self.file_handler,
-                                                                           config_root_directory=self._config_path.value,
+                                                                           # config_root_directory=self._config_path.value,
                                                                            overwrite=self._overwrite.value,
                                                                            sharkweb_btl_row_file=None,
                                                                            old_key=self._old_key.value)
-            self._update_files_local_nsf()
-            self._update_files_local_qc()
 
             self._converted_files = [path.stem for path in cnv_files]
+            self._update_files_local_nsf()
+            self._update_files_local_qc()
             self._notebook_local.select_frame('Granskning')
         except PermissionError as e:
             self.root_app.close_progress_window()
@@ -1077,9 +1080,9 @@ class PageStart(tk.Frame):
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
         files = self.file_handler.get_file_names('source', 'root', suffixes=['.hex'])
-        print()
-        print(f'{self.file_handler.get_dir("source", "root")=}')
-        print(f'{files}')
+        # print()
+        # print(f'{self.file_handler.get_dir("source", "root")=}')
+        # print(f'{files}')
         self._files_local_source.update_items(files)
 
         # if not self._local_data_path_source.value:
