@@ -1069,7 +1069,8 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
-        # self._update_files_local_nsf_selected()
+        self._update_files_local_nsf_select()
+        # self._update_files_local_nsf_select()
         if self._server_data_path_root.value:
             self._update_files_local_nsf_not_on_server()
             self._update_files_local_nsf_not_updated_on_server()
@@ -1138,7 +1139,10 @@ class PageStart(tk.Frame):
     def _update_files_local_nsf_all(self):
         files = self.file_handler.get_file_names('local', 'nsf')
         self._files_local_nsf_all.update_items(files)
-        # return files
+
+    def _update_files_local_nsf_select(self):
+        files = self.file_handler.get_file_names('local', 'nsf')
+        self._files_local_nsf_select.update_items(files)
 
     def _update_files_local_nsf_not_on_server(self):
         files = self.file_handler.get_file_names('local', 'nsf')
@@ -1180,7 +1184,7 @@ class PageStart(tk.Frame):
         # files = self.sbe_processing.get_file_names_in_server_directory('nsf')
         # self._files_server.update_items(sorted(files))
 
-    # def _update_files_local_nsf_selected(self):
+    # def _update_files_local_nsf_select(self):
     #     files = self.sbe_file_handler.get_files_in_directory(self._local_data_path_nsf.value)
     #     self._files_local_nsf_select.update_items(files)
     #     # Move to selected
