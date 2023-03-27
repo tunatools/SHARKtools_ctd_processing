@@ -87,6 +87,7 @@ class PageSimple(tk.Frame):
                                       self._delete_old_asvp_files,
                                       self._config_path,
                                       self._surfacesoak,
+                                      self._year,
                                       # self._tau,
                                       self._platform,
         )
@@ -107,7 +108,6 @@ class PageSimple(tk.Frame):
         self._callback_change_year()
         self._update_lists()
         self._save_obj.load(component=self._surfacesoak, user=self.user.name)
-        self._update_files()
         self._notebook.select_frame('Processering')
 
     def close(self):
@@ -345,22 +345,23 @@ class PageSimple(tk.Frame):
 
     def _process_files(self):
         self._active_ids = []
-        local_root = self._local_data_path_root.value
-        server_root = self._server_data_path_root.value
-        self.sbe_paths.set_local_root_directory(local_root)
-        self.sbe_paths.set_server_root_directory(server_root)
 
         active_patterns = self._files_source.get_selected()
-        # self._active_ids = [self._source_patterns_to_id[pat] for pat in active_patterns]
-        self._active_ids = [get_id_from_key(pat) for pat in active_patterns]
-        active_paths = [pack.path('hex') for _id, pack in self._id_to_source_pack.items() if _id in self._active_ids]
+        self._active_ids = [get_id_from_key(pattern) for pattern in active_patterns]
+        # all_files = []
+        # for serno in active_sernos:
+        #     all_files.extend(self._source_serno_to_file_paths[serno])
+        # packs = file_explorer.get_packages_from_file_list()
+        # self._active_ids = [get_id_from_key(pat) for pat in active_patterns]
+        # active_paths = [pack.path('hex') for _id, pack in self._id_to_source_pack.items() if _id in self._active_ids]
 
         create_asvp_file = False
         asvp_output_dir = self._asvp_files_directory.get()
         if asvp_output_dir:
             create_asvp_file = True
 
-        for path in active_paths:
+        for serno in self._active_ids:
+            path = self._source_serno_to_hex_path[serno]
             ignore_mismatch = False
             try_fixing_mismatch = False
             continue_trying = True
@@ -406,23 +407,26 @@ class PageSimple(tk.Frame):
 
     def _create_standard_format(self):
         try:
-            all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('cnv'),
-                                                                with_id_as_key=False, old_key=self._old_key.value)
-            all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
-            packs = []
-            logger.info(f'{all_packs.keys()=}')
-            for _id in self._active_ids:
-                logger.info(f'{_id=}')
-                pack = all_packs.get(_id)
-                if not pack:
-                    continue
-                packs.append(pack)
+            # all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'cnv'),
+            #                                                     with_id_as_key=False, old_key=self._old_key.value)
+            # all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
+            # packs = []
+            # logger.info(f'{all_packs.keys()=}')
+
+            packs = self._get_active_cnv_packs()
+
+            # for _id in self._active_ids:
+            #     logger.info(f'{_id=}')
+            #     pack = all_packs.get(_id)
+            #     if not pack:
+            #         continue
+            #     packs.append(pack)
             if not packs:
                 messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
                 return
             new_packs = ctd_processing.create_standard_format_for_packages(packs,
-                                                                           target_root_directory=self._local_data_path_root.value,
-                                                                           config_root_directory=self._config_path.value,
+                                                                           file_handler=self.file_handler,
+                                                                           # config_root_directory=self._config_path.value,
                                                                            sharkweb_btl_row_file=None,
                                                                            old_key=self._old_key.value)
         except PermissionError as e:
@@ -430,15 +434,31 @@ class PageSimple(tk.Frame):
                                  f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
         except Exception:
             messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
+            raise
 
-    def _get_active_packs(self):
-        all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
+    # def _get_active_nsf_packs(self):
+    #     packs = []
+    #     for serno in self._active_ids:
+    #         stem = self._source_serno_to_hex_path[serno].stem
+    #         self.file_handler.select_stem(stem)
+    #         pack = file_explorer.get_packages_from_file_list([p.path for p in self.file_handler.local_files.values()])
+    #         packs.append(pack)
+    #     return packs
+
+    def _get_active_cnv_packs(self):
+        all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'cnv'),
+                                                            with_id_as_key=False, old_key=self._old_key.value)
+        all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
+        return [pack for key, pack in all_packs.items() if key in self._active_ids]
+
+    def _get_active_nsf_packs(self):
+        all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'),
                                                             with_id_as_key=False, old_key=self._old_key.value)
         all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
         return [pack for key, pack in all_packs.items() if key in self._active_ids]
 
     def _preform_automatic_qc(self):
-        packs = self._get_active_packs()
+        packs = self._get_active_nsf_packs()
         files = [pack['txt'] for pack in packs]
         logger.info(f'{files=}')
         if not files:
@@ -463,7 +483,7 @@ class PageSimple(tk.Frame):
                 # qc_session.update_routines()
                 qc_session.run()
 
-            qc_session.write_log(Path(self.sbe_paths.get_local_directory('temp'), 'automatic_qc_log.yaml'),
+            qc_session.write_log(Path(self.file_handler.get_dir('local', 'temp'), 'automatic_qc_log.yaml'),
                                  reset_log=True)
 
             # datasets = session.read()
@@ -482,14 +502,14 @@ class PageSimple(tk.Frame):
 
             data_path = session.save_data(datasets,
                                           writer='ctd_standard_template', return_data_path=True,
-                                          save_path=self.sbe_paths.get_local_directory('temp'),
+                                          save_path=self.file_handler.get_dir('local', 'temp'),
                                           )
 
             # Den här metoden använder therading vilket innebär att vi måste vänta på att filerna skapats innan vi kan kopiera dem.
             data_path = Path(data_path)
             time.sleep(.5)
             for source_path in Path(data_path).iterdir():
-                target_path = Path(self.sbe_paths.get_local_directory('nsf'), source_path.name)
+                target_path = Path(self.file_handler.get_dir('local', 'nsf'), source_path.name)
                 shutil.copyfile(source_path, target_path)
             return data_path
         except Exception:
@@ -502,18 +522,25 @@ class PageSimple(tk.Frame):
         self._button_open_qc.config(state='disabled')
         self._button_close_qc.config(bg=self._no_color)
         file_names = self._get_file_names_for_selected_files_cruise()
+        self._manual_qc_active_ids = [get_id_from_key(name) for name in file_names]
         logger.debug(f'{file_names=}')
-        self.bokeh_server = VisQC(data_directory=self.sbe_paths.get_local_directory('nsf'),
+        self.bokeh_server = VisQC(data_directory=self.file_handler.get_dir('local', 'nsf'),
                                   visualize_setting='smhi_expedition_vis',
                                   filters={'file_names': file_names})
         self.bokeh_server.start()
         # self._button_close_qc.config(state='normal')
 
     def _get_file_names_for_selected_files_cruise(self):
-        active_packs = self._get_active_packs()
-        all_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'), as_list=True)
-        cruises = set([pack('cruise') for pack in active_packs])
-        file_names = [pack.get_file_path(suffix='.txt').name for pack in all_packs if pack('cruise') in cruises]
+        active_packs = self._get_active_nsf_packs()
+        # all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'), as_list=True)
+        file_names = []
+        for cruise in set([pack('cruise') for pack in active_packs]):
+            for key, obj in self.file_handler.get_all_files_by_cruise('local', cruise).items():
+                if key[0] != 'nsf':
+                    continue
+                if obj.suffix != '.txt':
+                    continue
+                file_names.append(key[1])
         return file_names
 
     def _close_manual_qc(self):
@@ -531,32 +558,48 @@ class PageSimple(tk.Frame):
         self._notebook.select_frame('Skicka via FTP')
 
     def _create_plots(self):
-        packs = self._get_active_packs()
+        packs = self._get_active_nsf_packs()
         image_paths = []
         for pack in packs:
-            img_paths = create_seabird_like_plots_for_package(pack, self.sbe_paths.get_local_directory('plot'))
+            img_paths = create_seabird_like_plots_for_package(pack, self.file_handler.get_dir('local', 'plot'))
             image_paths.extend(img_paths)
         return image_paths
 
     def _copy_files_to_server(self):
 
-        local_packs = file_explorer.get_packages_in_directory(self.sbe_paths.get_local_directory('nsf'),
-                                                              with_id_as_key=False,
-                                                              old_key=self._old_key.value, exclude_directory='temp')
-        local_packs = {get_id_from_key(key): pack for key, pack in local_packs.items()}
-
-        logger.info(f'{self._active_ids=}')
-        for _id in self._active_ids:
-            pack = local_packs.get(_id)
-            if not pack:
-                messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inga filer att kopiera...')
-                return
+        handler = self.file_handler
+        for pack in self._get_active_nsf_packs():
             if 'test' in pack.pattern.lower():
                 logger.warning(f'TEST package not copied to server: {pack} ')
                 continue
-            handler = file_handler.SBEFileHandler(self.sbe_paths)
             handler.select_pack(pack)
-            handler.copy_files_to_server()
+            handler.copy_files_to_server(update=True)
+
+        # local_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'),
+        #                                                       with_id_as_key=False,
+        #                                                       old_key=self._old_key.value, exclude_directory='temp')
+        # local_packs = {get_id_from_key(key): pack for key, pack in local_packs.items()}
+        #
+        # logger.info(f'{self._active_ids=}')
+        # for _id in self._active_ids:
+        #     pack = local_packs.get(_id)
+        #     if not pack:
+        #         messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inga filer att kopiera...')
+        #         return
+        #     if 'test' in pack.pattern.lower():
+        #         logger.warning(f'TEST package not copied to server: {pack} ')
+        #         continue
+        #     handler = file_handler.SBEFileHandler(self.sbe_paths)
+        #     handler.select_pack(pack)
+        #     handler.copy_files_to_server()
+
+    def _get_pack_for_file_stem(self, stem):
+        serno = self._source_stem_to_serno[stem]
+        file_paths = self._source_serno_to_file_paths[serno]
+        packs = file_explorer.get_packages_from_file_list(file_paths)
+        if len(packs) != 1:
+            raise
+        return packs[0]
 
     def _update_files(self, data=None):
         tkw.disable_buttons_in_class(self)
@@ -564,7 +607,8 @@ class PageSimple(tk.Frame):
         self._button_run.update_idletasks()
         self._active_ids = []
         self._source_serno_to_file_paths = {}
-        self._source_patterns_to_serno = {}
+        self._source_serno_to_hex_path = {}
+        self._source_stem_to_serno = {}
         self._files_source.update_items([])
 
         source_dir = self._local_data_path_source.value
@@ -594,11 +638,15 @@ class PageSimple(tk.Frame):
         server_files = self.file_handler.get_file_names('server', 'raw', suffixes=['.hex'])
         # server_files = get_files_in_directory(self.sbe_paths.get_server_directory(match_subdir))
 
-        for path in all_source_paths:
+        for path in all_source_paths.values():
             serno = get_id_from_key(path.name)
-            self._sbe_processing_paths.setdefault(serno, [])
-            self._sbe_processing_paths[serno].append(path)
-            self._source_patterns_to_serno[path.stem] = serno
+            if get_year_from_key(path.name) != self.year:
+                continue
+            self._source_serno_to_file_paths.setdefault(serno, [])
+            self._source_serno_to_file_paths[serno].append(path)
+            self._source_stem_to_serno[path.stem] = serno
+            if path.suffix == '.hex':
+                self._source_serno_to_hex_path[serno] = path
 
         # self._source_ids = {get_id_from_key(item): True for item in source_packs}
         local_serno = {get_id_from_key(item): True for item in local_files}
@@ -622,13 +670,8 @@ class PageSimple(tk.Frame):
         self._stringvar_nr_packs_missing_local.set(nr_packs_not_local)
         self._stringvar_nr_packs_missing_server.set(nr_packs_not_server)
 
-        self._source_patterns_to_id = {}
-        self._id_to_source_pack = {}
-        # self._source_patterns_to_pack = {}
-
-
-        keys = sorted(self._source_patterns_to_id)
-        self._stringvar_nr_packs_missing_tot.set(len(unprocessed_keys))
+        keys = sorted([stem for stem, serno in self._source_stem_to_serno.items() if serno in unprocessed_sernos])
+        self._stringvar_nr_packs_missing_tot.set(len(unprocessed_sernos))
         self._files_source.update_items(keys)
         self._files_source.move_items_to_selected(keys)
 
@@ -696,6 +739,7 @@ class PageSimple(tk.Frame):
         if not year:
             return
         self.update_file_handler()
+        self._update_files()
 
     def update_file_handler(self):
 
@@ -758,4 +802,8 @@ class PageSimple(tk.Frame):
 
 def get_id_from_key(key):
     return key.split('.')[0].split('_', 6)[-1].upper()
+
+
+def get_year_from_key(key):
+    return key.split('_')[2][:4]
 
