@@ -10,6 +10,7 @@ import tkinter as tk
 import traceback
 from pathlib import Path
 from tkinter import messagebox
+import datetime
 
 import ctd_processing
 import file_explorer
@@ -110,30 +111,36 @@ class PageStart(tk.Frame):
 
     def _update_file_handler_source(self, handler=None):
         handler = handler or self.file_handler
+        if not handler:
+            logger.debug('No handler active. Return in _update_file_handler_source')
+            return
         try:
             handler.set_root_dir('source', self._local_data_path_source.value)
             handler.store_files('source')
             handler.monitor_root_dir('source')
-            print(f'{handler.get_dir("source", "root")=}')
-            print(f'{handler.get_file_names("source", "root")=}')
         except RootDirectoryNotSetError:
             pass
 
     def _update_file_handler_local(self, handler=None):
         handler = handler or self.file_handler
+        if not handler:
+            logger.debug('No handler active. Return in _update_file_handler_local')
+            return
         try:
             handler.set_root_dir('local', self._local_data_path_root.value)
             handler.create_dirs('local')
             handler.store_files('local')
             handler.monitor_root_dir('local')
         except RootDirectoryNotSetError:
-            raise
             pass
         except Exception:
             raise
 
     def _update_file_handler_server(self, handler=None):
         handler = handler or self.file_handler
+        if not handler:
+            logger.debug('No handler active. Return in _update_file_handler_server')
+            return
         try:
             handler.set_root_dir('server', self._server_data_path_root.value)
             handler.create_dirs('server')
@@ -145,6 +152,9 @@ class PageStart(tk.Frame):
 
     def _update_file_handler_config(self, handler=None):
         handler = handler or self.file_handler
+        if not handler:
+            logger.debug('No handler active. Return in _update_file_handler_config')
+            return
         try:
             handler.set_root_dir('config', self._config_path.value)
             handler.store_files('config')
@@ -412,6 +422,7 @@ class PageStart(tk.Frame):
                                                       **layout)
 
         self._year = components.YearEntry(frame, 'year', title='År', row=2, column=1, **layout)
+        self._year.set(datetime.datetime.now().year)
 
         self._old_key = components.Checkbutton(frame, 'old_key', title='Generera gammalt filnamn', row=3, column=0,
                                                **layout)
@@ -1052,10 +1063,6 @@ class PageStart(tk.Frame):
         self._update_files_local_cnv()
         self._update_files_local_nsf()
         self._update_files_local_qc()
-        # self._update_files_local_nsf_all()
-        # self._update_files_local_nsf_selected()
-        # self._update_files_local_nsf_not_on_server()
-        # self._update_files_local_nsf_not_updated_on_server()
         self._update_ftp_frame()
 
     def _update_files_all_server(self):
@@ -1063,14 +1070,13 @@ class PageStart(tk.Frame):
             logger.warning('Server root directory is not set')
             return
         self._update_files_server()
-        # self.sbe_file_handler.update_all_server_files()
-        # self._update_server_data_directories()
-        # self._update_server_file_lists()
+        self._update_files_local_nsf_all()
+        self._update_files_local_nsf_not_on_server()
+        self._update_files_local_nsf_not_updated_on_server()
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_select()
-        # self._update_files_local_nsf_select()
         if self._server_data_path_root.value:
             self._update_files_local_nsf_not_on_server()
             self._update_files_local_nsf_not_updated_on_server()
@@ -1081,23 +1087,7 @@ class PageStart(tk.Frame):
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
         files = self.file_handler.get_file_names('source', 'root', suffixes=['.hex'])
-        # print()
-        # print(f'{self.file_handler.get_dir("source", "root")=}')
-        # print(f'{files}')
         self._files_local_source.update_items(files)
-
-        # if not self._local_data_path_source.value:
-        #     self._files_local_source.update_items()
-        #     self._local_data_path_source.value = ''
-        #     return
-        #
-        # path = Path(self._local_data_path_source.value)
-        # if not path.exists():
-        #     self._files_local_source.update_items()
-        #     self._local_data_path_source.value = ''
-        #     return
-        # files = get_files_in_directory(self._local_data_path_source.value, suffix='.hex')
-        # self._files_local_source.update_items(sorted(files))
 
     def _update_files_local_raw(self):
         files = self.file_handler.get_file_names('local', 'raw')
@@ -1146,7 +1136,6 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf_not_on_server(self):
         files = self.file_handler.get_file_names('local', 'nsf')
-        print(f'{self.file_handler.get_dir("local", "nsf")=}')
         not_on_server = []
         for file in files:
             try:
@@ -1174,33 +1163,6 @@ class PageStart(tk.Frame):
         files = self.file_handler.get_file_names('server', 'nsf')
         self._files_server.update_items(files)
 
-        # if not self._server_data_path_nsf.value:
-        #     self._files_server.update_items()
-        #     return
-        # path = Path(self._server_data_path_nsf.value)
-        # if not path.exists():
-        #     self._files_server.update_items()
-        #     return
-        # files = self.sbe_processing.get_file_names_in_server_directory('nsf')
-        # self._files_server.update_items(sorted(files))
-
-    # def _update_files_local_nsf_select(self):
-    #     files = self.sbe_file_handler.get_files_in_directory(self._local_data_path_nsf.value)
-    #     self._files_local_nsf_select.update_items(files)
-    #     # Move to selected
-    #     file_stems = self._get_selected_local_cnv_stems()
-    #     if not file_stems:
-    #         return
-    #     all_files = self._files_local_nsf_select.get_all_items()
-    #     select = []
-    #     for file in all_files:
-    #         if Path(file).stem in file_stems:
-    #             select.append(file)
-    #     self._files_local_nsf_select.deselect_all()  # here 3
-    #     self._files_local_nsf_select.move_items_to_selected(select)
-    #
-    # def _get_selected_local_cnv_stems(self):
-    #     pass
 
 
 
