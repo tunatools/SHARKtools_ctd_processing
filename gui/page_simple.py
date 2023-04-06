@@ -561,7 +561,7 @@ class PageSimple(tk.Frame):
         packs = self._get_active_nsf_packs()
         image_paths = []
         for pack in packs:
-            img_paths = create_seabird_like_plots_for_package(pack, self.file_handler.get_dir('local', 'plot'))
+            img_paths = create_seabird_like_plots_for_package(pack, self.file_handler.get_dir('local', 'plots'))
             image_paths.extend(img_paths)
         return image_paths
 
