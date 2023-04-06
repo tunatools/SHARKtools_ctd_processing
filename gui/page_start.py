@@ -448,7 +448,7 @@ class PageStart(tk.Frame):
                                                                    row=0, column=0, **layout)
 
         self._button_update = tk.Button(frame, text='Uppdatera lokalt mappinnehåll mm.',
-                                        command=None)  # self._update_all_local)
+                                        command=self._update_files_all_local)
         self._button_update.grid(row=0, column=1, padx=5, pady=2, sticky='ne')
 
         self._notebook_local = tkw.NotebookWidget(frame,
