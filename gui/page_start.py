@@ -91,7 +91,7 @@ class PageStart(tk.Frame):
         return self._file_handlers.setdefault(year, get_seabird_file_handler(year=year))
 
     def update_file_handler(self):
-
+        logger.debug('start: update_file_handler')
         handler = self.file_handler
         # Update paths
 
@@ -106,7 +106,7 @@ class PageStart(tk.Frame):
             pass
 
         self._ftp_frame.set_file_handler(handler)
-
+        logger.debug('end: update_file_handler')
         return handler
 
     def _update_file_handler_source(self, handler=None):
@@ -118,6 +118,7 @@ class PageStart(tk.Frame):
             handler.set_root_dir('source', self._local_data_path_source.value)
             handler.store_files('source')
             handler.monitor_root_dir('source')
+            logger.debug('done in: _update_file_handler_source')
         except RootDirectoryNotSetError:
             pass
 
@@ -131,6 +132,7 @@ class PageStart(tk.Frame):
             handler.create_dirs('local')
             handler.store_files('local')
             handler.monitor_root_dir('local')
+            logger.debug('done in: _update_file_handler_local')
         except RootDirectoryNotSetError:
             pass
         except Exception:
@@ -146,7 +148,7 @@ class PageStart(tk.Frame):
             handler.create_dirs('server')
             handler.store_files('server')
             handler.monitor_root_dir('server')
-            print(f'{len(handler.get_files("server", "nsf"))=}')
+            logger.debug('done in: _update_file_handler_server')
         except RootDirectoryNotSetError:
             pass
 
@@ -159,6 +161,7 @@ class PageStart(tk.Frame):
             handler.set_root_dir('config', self._config_path.value)
             handler.store_files('config')
             handler.monitor_root_dir('config')
+            logger.debug('done in: _update_file_handler_config')
         except RootDirectoryNotSetError:
             pass
 
@@ -208,6 +211,7 @@ class PageStart(tk.Frame):
         subscribe('select_platform', self._callback_select_platform)
 
     def update_page(self):
+        logger.debug('start: update_page')
         self._save_obj.load(user=self.user.name)
 
         self._notebook_local.select_frame('Börja här')
@@ -223,6 +227,7 @@ class PageStart(tk.Frame):
         # self._make_server_root_updates(message=False)
 
         self._update_files_all()
+        logger.debug('end: update_page')
 
     def close(self):
         self._callback_stop_manual_qc()
@@ -785,7 +790,7 @@ class PageStart(tk.Frame):
         self._update_local_data_directories()
         self._update_server_data_directories()
         self.root_app.close_progress_window()
-        logger.debug('stop: _callback_change_year')
+        logger.debug('end: _callback_change_year')
 
     def _callback_change_tau(self, value):
         if not value:
@@ -877,7 +882,7 @@ class PageStart(tk.Frame):
                                   visualize_setting='smhi_expedition_vis',
                                   filters={'file_names': file_names})
         self.bokeh_server.start()
-        logger.debug('stop: _callback_start_manual_qc')
+        logger.debug('end: _callback_start_manual_qc')
 
     def _callback_stop_manual_qc(self):
         logger.debug('start: _callback_stop_manual_qc')
@@ -894,7 +899,7 @@ class PageStart(tk.Frame):
         if self._create_plots_option.get():
             self._create_plots()
         self._notebook_local.select_frame('Standardformat')
-        logger.debug('stop: _callback_stop_manual_qc')
+        logger.debug('end: _callback_stop_manual_qc')
 
     def _callback_create_plots(self):
         logger.debug('start: _callback_create_plots')
@@ -904,7 +909,7 @@ class PageStart(tk.Frame):
             messagebox.showinfo('Skapa plottar',
                                 f"Plottar har skapats här: {self.file_handler.get_dir('local', 'plots')}")
         self.root_app.close_progress_window()
-        logger.debug('stop: _callback_create_plots')
+        logger.debug('end: _callback_create_plots')
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -1072,7 +1077,7 @@ class PageStart(tk.Frame):
         self._update_files_local_cnv()
         self._notebook_local.select_frame('cnv')
         self.root_app.close_progress_window()
-        logger.debug('stop: _callback_continue_source')
+        logger.debug('end: _callback_continue_source')
 
 ########################################################################################################################
 ########################################################################################################################
@@ -1124,13 +1129,13 @@ class PageStart(tk.Frame):
         logger.debug('start: _update_files_local_source')
         files = self.file_handler.get_file_names('source', 'root', suffixes=['.hex'])
         self._files_local_source.update_items(files)
-        logger.debug('stop: _update_files_local_source')
+        logger.debug('end: _update_files_local_source')
 
     def _update_files_local_raw(self):
         logger.debug('start: _update_files_local_raw')
         files = self.file_handler.get_file_names('local', 'raw')
         self._files_local_raw.update_items(files)
-        logger.debug('stop: _update_files_local_raw')
+        logger.debug('end: _update_files_local_raw')
 
     def _update_files_local_cnv(self):
         logger.debug('start: _update_files_local_cnv')
@@ -1146,7 +1151,7 @@ class PageStart(tk.Frame):
         select_files = [all_cnv_files.get(name) for name in self._processed_files if all_cnv_files.get(name)]
         logger.debug(f'select_files: {select_files}')
         self._files_local_cnv.move_items_to_selected(select_files)
-        logger.debug('stop: _update_files_local_cnv')
+        logger.debug('end: _update_files_local_cnv')
 
     def _update_files_local_qc(self):
         logger.debug('start: _update_files_local_qc')
@@ -1161,7 +1166,7 @@ class PageStart(tk.Frame):
             all_txt_files[name] = item
         select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
         self._files_local_qc.move_items_to_selected(select_files)
-        logger.debug('stop: _update_files_local_qc')
+        logger.debug('end: _update_files_local_qc')
 
     def _update_ftp_frame(self):
         logger.debug('start: _update_ftp_frame')
@@ -1169,19 +1174,19 @@ class PageStart(tk.Frame):
         all_keys = self._ftp_frame.get_all_keys()
         selected_keys = [key for key in all_keys if key in self._converted_files]
         self._ftp_frame.move_keys_to_selected(selected_keys)
-        logger.debug('stop: _update_ftp_frame')
+        logger.debug('end: _update_ftp_frame')
 
     def _update_files_local_nsf_all(self):
         logger.debug('start: _update_files_local_nsf_all')
         files = self.file_handler.get_file_names('local', 'nsf')
         self._files_local_nsf_all.update_items(files)
-        logger.debug('stop: _update_files_local_nsf_all')
+        logger.debug('end: _update_files_local_nsf_all')
 
     def _update_files_local_nsf_select(self):
         logger.debug('start: _update_files_local_nsf_select')
         files = self.file_handler.get_file_names('local', 'nsf')
         self._files_local_nsf_select.update_items(files)
-        logger.debug('stop: _update_files_local_nsf_select')
+        logger.debug('end: _update_files_local_nsf_select')
 
     def _update_files_local_nsf_not_on_server(self):
         logger.debug('start: _update_files_local_nsf_not_on_server')
@@ -1195,7 +1200,7 @@ class PageStart(tk.Frame):
             except exceptions.InvalidFileNameFormat:
                 continue
         self._files_local_nsf_missing.update_items(not_on_server)
-        logger.debug('stop: _update_files_local_nsf_not_on_server')
+        logger.debug('end: _update_files_local_nsf_not_on_server')
 
     def _update_files_local_nsf_not_updated_on_server(self):
         logger.debug('start: _update_files_local_nsf_not_updated_on_server')
@@ -1209,14 +1214,14 @@ class PageStart(tk.Frame):
             except exceptions.InvalidFileNameFormat:
                 continue
         self._files_local_nsf_not_updated.update_items(not_updated_on_server)
-        logger.debug('stop: _update_files_local_nsf_not_updated_on_server')
+        logger.debug('end: _update_files_local_nsf_not_updated_on_server')
 
     def _update_files_server(self):
         """Updates server file list based on files found in path: self._server_data_path_nsf"""
         logger.debug('start: _update_files_server')
         files = self.file_handler.get_file_names('server', 'nsf')
         self._files_server.update_items(files)
-        logger.debug('stop: _update_files_server')
+        logger.debug('end: _update_files_server')
 
 
 
