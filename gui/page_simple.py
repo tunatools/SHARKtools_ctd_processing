@@ -339,6 +339,7 @@ class PageSimple(tk.Frame):
 
         self._process_files()
         self._create_standard_format()
+        time.sleep(1)  # This is to assert registration of new files
         self._update_ftp_frame()
         self._preform_automatic_qc()
         self._open_manual_qc()

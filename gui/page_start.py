@@ -941,6 +941,7 @@ class PageStart(tk.Frame):
                                                                            old_key=self._old_key.value)
 
             self._converted_files = [path.stem for path in cnv_files]
+            time.sleep(1)  # This is to assert registration of new files
             self._update_files_local_nsf()
             self._update_files_local_qc()
             self._notebook_local.select_frame('Granskning')
