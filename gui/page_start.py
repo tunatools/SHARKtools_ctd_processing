@@ -775,14 +775,17 @@ class PageStart(tk.Frame):
         self.root_app.close_progress_window()
 
     def _callback_change_year(self, *args):
+        logger.debug('start: _callback_change_year')
         year = self._year.value
         if not year:
+            logger.debug('No year set!')
             return
         self.root_app.open_progress_window()
         self.update_file_handler()
         self._update_local_data_directories()
         self._update_server_data_directories()
         self.root_app.close_progress_window()
+        logger.debug('stop: _callback_change_year')
 
     def _callback_change_tau(self, value):
         if not value:
@@ -792,9 +795,12 @@ class PageStart(tk.Frame):
             self._tau.value = False
 
     def _callback_continue_automatic_qc(self):
+        logger.debug('start: _callback_continue_automatic_qc')
         file_names = self._files_local_qc.get_selected()
         if not file_names:
-            messagebox.showwarning('Automatisk granskning', 'Inga filer är valda för granskning!')
+            msg = 'Inga filer är valda för granskning!'
+            logger.warning(msg)
+            messagebox.showwarning('Automatisk granskning', msg)
             return
         files = []
         nr_files_qc = 0
@@ -809,8 +815,9 @@ class PageStart(tk.Frame):
             nr_files_qc += 1
 
         if not files:
-            messagebox.showwarning('Automatisk granskning',
-                                   'Valda filer är redan granskade idag. \nIngen granskning gjord!')
+            msg = 'Valda filer är redan granskade idag. \nIngen granskning gjord!'
+            logger.warning(msg)
+            messagebox.showwarning('Automatisk granskning', msg)
             return
         logger.info(f'{files=}')
 
@@ -846,17 +853,22 @@ class PageStart(tk.Frame):
                 if target_path.exists() and not self._overwrite:
                     continue
                 shutil.copyfile(str(source_path), str(target_path))
-
-            messagebox.showinfo('Automatisk granskning', f'{nr_files_qc} av {len(file_names)} granskade!')
+            msg = f'{nr_files_qc} av {len(file_names)} granskade!'
+            logger.info(msg)
+            messagebox.showinfo('Automatisk granskning', msg)
             return data_path
         except Exception:
-            messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+            msg = traceback.format_exc()
+            logger.critical(msg)
+            messagebox.showwarning('Automatisk granskning', msg)
             raise
         finally:
             self.root_app.close_progress_window()
             tkw.enable_buttons_in_class(self)
+            logger.debug('start: _callback_continue_automatic_qc')
 
     def _callback_start_manual_qc(self):
+        logger.debug('start: _callback_start_manual_qc')
         self._button_open_manual_qc.config(state='disabled')
         self._button_automatic_qc.config(state='disabled')
         self._button_close_manual_qc.config(bg='red')
@@ -865,9 +877,12 @@ class PageStart(tk.Frame):
                                   visualize_setting='smhi_expedition_vis',
                                   filters={'file_names': file_names})
         self.bokeh_server.start()
+        logger.debug('stop: _callback_start_manual_qc')
 
     def _callback_stop_manual_qc(self):
+        logger.debug('start: _callback_stop_manual_qc')
         if not self.bokeh_server:
+            logger.info('No bokeh server started')
             return
         self.bokeh_server.stop()
         self.bokeh_server = None
@@ -879,14 +894,17 @@ class PageStart(tk.Frame):
         if self._create_plots_option.get():
             self._create_plots()
         self._notebook_local.select_frame('Standardformat')
+        logger.debug('stop: _callback_stop_manual_qc')
 
     def _callback_create_plots(self):
+        logger.debug('start: _callback_create_plots')
         self.root_app.open_progress_window()
         created = self._create_plots(with_config=True)
         if created:
             messagebox.showinfo('Skapa plottar',
                                 f"Plottar har skapats här: {self.file_handler.get_dir('local', 'plots')}")
         self.root_app.close_progress_window()
+        logger.debug('stop: _callback_create_plots')
 
     def _callback_on_select_local_nsf(self):
         selected = self._files_local_nsf_select.get_selected()
@@ -906,22 +924,30 @@ class PageStart(tk.Frame):
         files = self._files_local_nsf_all.get_items()
         self._copy_to_server_and_update(files)
         self.root_app.close_progress_window()
-        messagebox.showinfo('Kopiera till servern', f'ALLT filer har kopierats till servern')
+        msg = f'ALLT filer har kopierats till servern'
+        logger.info(msg)
+        messagebox.showinfo('Kopiera till servern', msg)
 
     def _callback_copy_missing_to_server(self):
         files = self._files_local_nsf_missing.get_items()
         self._copy_to_server_and_update(files)
-        messagebox.showinfo('Kopiera till servern', f'Saknade filer har kopierats till servern')
+        msg = 'Kopiera till servern', f'Saknade filer har kopierats till servern'
+        logger.info(msg)
+        messagebox.showinfo('Kopiera till servern', msg)
 
     def _callback_copy_not_updated_to_server(self):
         files = self._files_local_nsf_not_updated.get_items()
         self._copy_to_server_and_update(files)
-        messagebox.showinfo('Kopiera till servern', f'Alla icke uppdaterade filer har kopierats till servern')
+        msg = f'Alla icke uppdaterade filer har kopierats till servern'
+        logger.info(msg)
+        messagebox.showinfo('Kopiera till servern', msg)
 
     def _callback_copy_selected_to_server(self):
         files = self._files_local_nsf_select.get_selected()
         self._copy_to_server_and_update(files)
-        messagebox.showinfo('Kopiera till servern', f'Valda filer har kopierats till servern')
+        msg = f'Valda filer har kopierats till servern'
+        logger.info(msg)
+        messagebox.showinfo('Kopiera till servern', msg)
 
     def _callback_continue_cnv(self):
         try:
@@ -929,7 +955,9 @@ class PageStart(tk.Frame):
             self._converted_files = []
             cnv_files = self._get_selected_local_cnv_file_paths()
             if not cnv_files:
-                messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
+                msg = 'Inga CNV filer valda för att skapa standardformat!'
+                logger.warning(msg)
+                messagebox.showwarning('Skapar standardformat', msg)
                 return
             packs = file_explorer.get_packages_from_file_list(cnv_files, instrument_type='sbe', as_list=True,
                                                               old_key=self._old_key.value)
@@ -947,17 +975,20 @@ class PageStart(tk.Frame):
             self._notebook_local.select_frame('Granskning')
         except PermissionError as e:
             self.root_app.close_progress_window()
-            messagebox.showerror('Skapa standardformat',
-                                 f'Det verkar som att en fil är öppen. Stäng den och försök igen: {e}')
+            msg = f'Det verkar som att en fil är öppen. Stäng den och försök igen: {e}'
+            logger.error(msg)
+            messagebox.showerror('Skapa standardformat', msg)
         except Exception:
             self.root_app.close_progress_window()
-            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
+            msg = traceback.format_exc()
+            logger.critical(msg)
+            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{msg}')
             raise
         finally:
             self.root_app.close_progress_window()
 
     def _callback_continue_source(self):
-
+        logger.debug('start: _callback_continue_source')
         if not self._config_path.get():
             messagebox.showwarning('Kör processering', 'Ingen rotkatalog för ctd_config vald!')
             return
@@ -1032,14 +1063,16 @@ class PageStart(tk.Frame):
                         return
                 except Exception as e:
                     self.root_app.close_progress_window()
-                    messagebox.showerror('Något gick fel', traceback.format_exc())
+                    msg = traceback.format_exc()
+                    logger.critical(msg)
+                    messagebox.showerror('Något gick fel', msg)
                     raise
 
         self._processed_files = [path.stem for path in processed_files]
         self._update_files_local_cnv()
         self._notebook_local.select_frame('cnv')
         self.root_app.close_progress_window()
-
+        logger.debug('stop: _callback_continue_source')
 
 ########################################################################################################################
 ########################################################################################################################
@@ -1082,19 +1115,25 @@ class PageStart(tk.Frame):
             self._update_files_local_nsf_not_on_server()
             self._update_files_local_nsf_not_updated_on_server()
         else:
-            messagebox.showinfo('Updaterar listor på standardformatet', 'Ingen rootkatlog för servern är satt. Kan '
-                                                                        'inte uppdatera relaterade listor')
+            msg = 'Ingen rootkatlog för servern är satt. Kan inte uppdatera relaterade listor'
+            logger.info(msg)
+            messagebox.showinfo('Updaterar listor på standardformatet', msg)
 
     def _update_files_local_source(self):
         """Updates local file list based on files found in path: self._local_data_path_source"""
+        logger.debug('start: _update_files_local_source')
         files = self.file_handler.get_file_names('source', 'root', suffixes=['.hex'])
         self._files_local_source.update_items(files)
+        logger.debug('stop: _update_files_local_source')
 
     def _update_files_local_raw(self):
+        logger.debug('start: _update_files_local_raw')
         files = self.file_handler.get_file_names('local', 'raw')
         self._files_local_raw.update_items(files)
+        logger.debug('stop: _update_files_local_raw')
 
     def _update_files_local_cnv(self):
+        logger.debug('start: _update_files_local_cnv')
         files = self.file_handler.get_file_names('local', 'cnv', suffixes=['.cnv'])
         self._files_local_cnv.update_items(files)
         self._files_local_cnv.deselect_all()
@@ -1107,8 +1146,10 @@ class PageStart(tk.Frame):
         select_files = [all_cnv_files.get(name) for name in self._processed_files if all_cnv_files.get(name)]
         logger.debug(f'select_files: {select_files}')
         self._files_local_cnv.move_items_to_selected(select_files)
+        logger.debug('stop: _update_files_local_cnv')
 
     def _update_files_local_qc(self):
+        logger.debug('start: _update_files_local_qc')
         files = self.file_handler.get_file_names('local', 'nsf') or []
         self._files_local_qc.update_items(files)
         self._files_local_qc.deselect_all()
@@ -1120,22 +1161,30 @@ class PageStart(tk.Frame):
             all_txt_files[name] = item
         select_files = [all_txt_files.get(name) for name in self._converted_files if all_txt_files.get(name)]
         self._files_local_qc.move_items_to_selected(select_files)
+        logger.debug('stop: _update_files_local_qc')
 
     def _update_ftp_frame(self):
+        logger.debug('start: _update_ftp_frame')
         self._ftp_frame.update_frame()
         all_keys = self._ftp_frame.get_all_keys()
         selected_keys = [key for key in all_keys if key in self._converted_files]
         self._ftp_frame.move_keys_to_selected(selected_keys)
+        logger.debug('stop: _update_ftp_frame')
 
     def _update_files_local_nsf_all(self):
+        logger.debug('start: _update_files_local_nsf_all')
         files = self.file_handler.get_file_names('local', 'nsf')
         self._files_local_nsf_all.update_items(files)
+        logger.debug('stop: _update_files_local_nsf_all')
 
     def _update_files_local_nsf_select(self):
+        logger.debug('start: _update_files_local_nsf_select')
         files = self.file_handler.get_file_names('local', 'nsf')
         self._files_local_nsf_select.update_items(files)
+        logger.debug('stop: _update_files_local_nsf_select')
 
     def _update_files_local_nsf_not_on_server(self):
+        logger.debug('start: _update_files_local_nsf_not_on_server')
         files = self.file_handler.get_file_names('local', 'nsf')
         not_on_server = []
         for file in files:
@@ -1146,8 +1195,10 @@ class PageStart(tk.Frame):
             except exceptions.InvalidFileNameFormat:
                 continue
         self._files_local_nsf_missing.update_items(not_on_server)
+        logger.debug('stop: _update_files_local_nsf_not_on_server')
 
     def _update_files_local_nsf_not_updated_on_server(self):
+        logger.debug('start: _update_files_local_nsf_not_updated_on_server')
         files = self.file_handler.get_file_names('local', 'nsf')
         not_updated_on_server = []
         for file in files:
@@ -1158,11 +1209,14 @@ class PageStart(tk.Frame):
             except exceptions.InvalidFileNameFormat:
                 continue
         self._files_local_nsf_not_updated.update_items(not_updated_on_server)
+        logger.debug('stop: _update_files_local_nsf_not_updated_on_server')
 
     def _update_files_server(self):
         """Updates server file list based on files found in path: self._server_data_path_nsf"""
+        logger.debug('start: _update_files_server')
         files = self.file_handler.get_file_names('server', 'nsf')
         self._files_server.update_items(files)
+        logger.debug('stop: _update_files_server')
 
 
 
