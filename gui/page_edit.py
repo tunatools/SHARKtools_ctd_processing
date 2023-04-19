@@ -156,22 +156,36 @@ class PageEditRaw(tk.Frame):
         logger.info('Updating metadata')
         sharkweb_file_path = None
         lims_file_path = None
-        if self._boolvar_sharkweb:
-            sharkweb_file_path = self._sharkweb_path.get() or None
+        if self._boolvar_sharkweb.get():
+            sharkweb_file_path = self._sharkweb_path.get()
+            if not sharkweb_file_path:
+                msg = 'Ingen sharkweb-fil vald'
+                logger.warning(msg)
+                messagebox.showwarning('Använd sharkweb-fil', msg)
+                return
             logger.info(f'Updating metadata from {sharkweb_file_path=}')
 
-        if self._boolvar_lims:
-            lims_file_path = self._lims_path.get() or None
+        if self._boolvar_lims.get():
+            lims_file_path = self._lims_path.get()
+            if not lims_file_path:
+                msg = 'Ingen LIMS-file vald'
+                logger.warning(msg)
+                messagebox.showwarning('Använd LIMS-fil', msg)
+                return
             logger.info(f'Updating metadata from {lims_file_path=}')
 
         output_dir = self._target_dir.get()
         if not output_dir:
-            messagebox.showwarning('Uppdatera metadata', 'Ingen mapp att spara till vald')
+            msg = 'Ingen mapp att spara till vald'
+            logger.warning(msg)
+            messagebox.showwarning('Uppdatera metadata', msg)
             return
 
         packs = [self._all_packs[key] for key in self._packs_listbox.get_selected()]
         if not packs:
-            messagebox.showwarning('Uppdatera metadata', 'Inga filer valda')
+            msg = 'Inga filer valda'
+            logger.warning(msg)
+            messagebox.showwarning('Uppdatera metadata', msg)
             return
         try:
             file_explorer.edit_seabird_raw_files_in_packages(
@@ -181,8 +195,12 @@ class PageEditRaw(tk.Frame):
                 lims_file_path=lims_file_path,
                 columns=META_COLUMNS,
             )
-            messagebox.showinfo('Uppdatera metadata', f'Metadata har lagts till i {len(packs)} profiler.')
+            msg = f'Metadata har lagts till i {len(packs)} profiler.'
+            logger.info(msg)
+            messagebox.showinfo('Uppdatera metadata', msg)
         except Exception:
-            messagebox.showerror('Uppdatera metadata', traceback.format_exc())
+            msg = traceback.format_exc()
+            logger.critical(msg)
+            messagebox.showerror('Uppdatera metadata', msg)
             raise
 
