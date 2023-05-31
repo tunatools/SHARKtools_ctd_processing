@@ -729,8 +729,6 @@ class PageStart(tk.Frame):
 
         tkw.grid_configure(frame, nr_rows=r + 1)
 
-
-
 ########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
@@ -759,7 +757,7 @@ class PageStart(tk.Frame):
         self._update_files_all_local()
 
     def _callback_change_server_root_directory(self, *args):
-        """ Called when the the server root directory is changed """
+        """ Called when the server root directory is changed """
         path = Path(self._server_data_path_root.value)
         if not path.exists():
             raise FileNotFoundError(path)
