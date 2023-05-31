@@ -453,7 +453,7 @@ class PageSimple(tk.Frame):
         return [pack for key, pack in all_packs.items() if key in self._active_ids]
 
     def _get_active_nsf_packs(self):
-        all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'),
+        all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'data'),
                                                             with_id_as_key=False, old_key=self._old_key.value)
         all_packs = {get_id_from_key(key): pack for key, pack in all_packs.items()}
         return [pack for key, pack in all_packs.items() if key in self._active_ids]
@@ -510,7 +510,7 @@ class PageSimple(tk.Frame):
             data_path = Path(data_path)
             time.sleep(.5)
             for source_path in Path(data_path).iterdir():
-                target_path = Path(self.file_handler.get_dir('local', 'nsf'), source_path.name)
+                target_path = Path(self.file_handler.get_dir('local', 'data'), source_path.name)
                 shutil.copyfile(source_path, target_path)
             return data_path
         except Exception:
@@ -525,7 +525,7 @@ class PageSimple(tk.Frame):
         file_names = self._get_file_names_for_selected_files_cruise()
         self._manual_qc_active_ids = [get_id_from_key(name) for name in file_names]
         logger.debug(f'{file_names=}')
-        self.bokeh_server = VisQC(data_directory=self.file_handler.get_dir('local', 'nsf'),
+        self.bokeh_server = VisQC(data_directory=self.file_handler.get_dir('local', 'data'),
                                   visualize_setting='smhi_expedition_vis',
                                   filters={'file_names': file_names})
         self.bokeh_server.start()
@@ -533,11 +533,11 @@ class PageSimple(tk.Frame):
 
     def _get_file_names_for_selected_files_cruise(self):
         active_packs = self._get_active_nsf_packs()
-        # all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'), as_list=True)
+        # all_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'data'), as_list=True)
         file_names = []
         for cruise in set([pack('cruise') for pack in active_packs]):
             for key, obj in self.file_handler.get_all_files_by_cruise('local', cruise).items():
-                if key[0] != 'nsf':
+                if key[0] != 'data':
                     continue
                 if obj.suffix != '.txt':
                     continue
@@ -576,7 +576,7 @@ class PageSimple(tk.Frame):
             handler.select_pack(pack)
             handler.copy_files_to_server(update=True)
 
-        # local_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'nsf'),
+        # local_packs = file_explorer.get_packages_in_directory(self.file_handler.get_dir('local', 'data'),
         #                                                       with_id_as_key=False,
         #                                                       old_key=self._old_key.value, exclude_directory='temp')
         # local_packs = {get_id_from_key(key): pack for key, pack in local_packs.items()}
@@ -705,7 +705,7 @@ class PageSimple(tk.Frame):
         self._update_surfacesaok_list()
 
     def _update_ftp_frame(self):
-        nsf_path = self.file_handler.get_dir('local', 'nsf')
+        nsf_path = self.file_handler.get_dir('local', 'data')
         if not nsf_path:
             return
         self._ftp_frame.update_frame()

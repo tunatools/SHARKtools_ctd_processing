@@ -137,7 +137,7 @@ class FtpFrame(tk.Frame):
         self._files_on_ftp.update_items(file_list)
 
     def update_frame(self):
-        self._local_data_path_ftp.set(path=self._file_handler.get_dir('local', 'nsf'))
+        self._local_data_path_ftp.set(path=self._file_handler.get_dir('local', 'data'))
         self._update_items()
         self._on_toggle_ftp_test()
 

@@ -344,17 +344,17 @@ class PageStart(tk.Frame):
             return
         self._local_data_path_raw.set(path=self.file_handler.get_dir('local', 'raw'))
         self._local_data_path_cnv.set(path=self.file_handler.get_dir('local', 'cnv'))
-        self._local_data_path_qc.set(path=self.file_handler.get_dir('local', 'nsf'))
-        self._local_data_path_nsf.set(path=self.file_handler.get_dir('local', 'nsf'))
+        self._local_data_path_qc.set(path=self.file_handler.get_dir('local', 'data'))
+        self._local_data_path_nsf.set(path=self.file_handler.get_dir('local', 'data'))
         self._ftp_frame.update_frame()
 
     def _update_server_data_directories(self):
         if not self.file_handler.root_dir_is_set('server'):
             return
-        self._server_data_path_nsf.set(path=self.file_handler.get_dir('server', 'nsf') or '')
+        self._server_data_path_nsf.set(path=self.file_handler.get_dir('server', 'data') or '')
 
     def _create_plots(self, with_config=False):
-        directory = self.file_handler.get_dir('local', 'nsf')
+        directory = self.file_handler.get_dir('local', 'data')
         names = self._files_local_qc.get_selected()
         if not names:
             messagebox.showwarning('Skapa plottar', 'Inga filer valda för att skapa plottar!')
@@ -748,7 +748,7 @@ class PageStart(tk.Frame):
         self._update_files_local_source()
 
     def _callback_change_local_root_directory(self, *args):
-        """ Called when the the local root directory is changed """
+        """ Called when the local root directory is changed """
         path = Path(self._local_data_path_root.value)
         if not path.exists():
             raise FileNotFoundError(path)
@@ -809,7 +809,7 @@ class PageStart(tk.Frame):
         nr_files_qc = 0
         for name in file_names:
             self.file_handler.select_file(name)
-            local_file_path = self.file_handler.get_file_path('local', 'nsf', name)
+            local_file_path = self.file_handler.get_file_path('local', 'data', name)
             if not self._intvar_allow_automatic_qc_same_day.get():
                 sf = StandardFormatComments(local_file_path)
                 if sf.has_automatic_qc_today():
@@ -852,7 +852,7 @@ class PageStart(tk.Frame):
             data_path = Path(data_path)
             time.sleep(.5)
             for source_path in Path(data_path).iterdir():
-                target_path = Path(self.file_handler.get_dir('local', 'nsf'), source_path.name)
+                target_path = Path(self.file_handler.get_dir('local', 'data'), source_path.name)
                 if target_path.exists() and not self._overwrite:
                     continue
                 shutil.copyfile(str(source_path), str(target_path))
@@ -876,7 +876,7 @@ class PageStart(tk.Frame):
         self._button_automatic_qc.config(state='disabled')
         self._button_close_manual_qc.config(bg='red')
         file_names = self._files_local_qc.get_selected()
-        self.bokeh_server = VisQC(data_directory=self.file_handler.get_dir('local', 'nsf'),
+        self.bokeh_server = VisQC(data_directory=self.file_handler.get_dir('local', 'data'),
                                   visualize_setting='smhi_expedition_vis',
                                   filters={'file_names': file_names})
         self.bokeh_server.start()
@@ -934,7 +934,7 @@ class PageStart(tk.Frame):
     def _callback_copy_missing_to_server(self):
         files = self._files_local_nsf_missing.get_items()
         self._copy_to_server_and_update(files)
-        msg = 'Kopiera till servern', f'Saknade filer har kopierats till servern'
+        msg = f'Saknade filer har kopierats till servern'
         logger.info(msg)
         messagebox.showinfo('Kopiera till servern', msg)
 
@@ -1153,7 +1153,7 @@ class PageStart(tk.Frame):
 
     def _update_files_local_qc(self):
         logger.debug('start: _update_files_local_qc')
-        files = self.file_handler.get_file_names('local', 'nsf') or []
+        files = self.file_handler.get_file_names('local', 'data') or []
         self._files_local_qc.update_items(files)
         self._files_local_qc.deselect_all()
         all_txt_files = {}
@@ -1176,19 +1176,19 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf_all(self):
         logger.debug('start: _update_files_local_nsf_all')
-        files = self.file_handler.get_file_names('local', 'nsf')
+        files = self.file_handler.get_file_names('local', 'data')
         self._files_local_nsf_all.update_items(files)
         logger.debug('end: _update_files_local_nsf_all')
 
     def _update_files_local_nsf_select(self):
         logger.debug('start: _update_files_local_nsf_select')
-        files = self.file_handler.get_file_names('local', 'nsf')
+        files = self.file_handler.get_file_names('local', 'data')
         self._files_local_nsf_select.update_items(files)
         logger.debug('end: _update_files_local_nsf_select')
 
     def _update_files_local_nsf_not_on_server(self):
         logger.debug('start: _update_files_local_nsf_not_on_server')
-        files = self.file_handler.get_file_names('local', 'nsf')
+        files = self.file_handler.get_file_names('local', 'data')
         not_on_server = []
         for file in files:
             try:
@@ -1202,7 +1202,7 @@ class PageStart(tk.Frame):
 
     def _update_files_local_nsf_not_updated_on_server(self):
         logger.debug('start: _update_files_local_nsf_not_updated_on_server')
-        files = self.file_handler.get_file_names('local', 'nsf')
+        files = self.file_handler.get_file_names('local', 'data')
         not_updated_on_server = []
         for file in files:
             try:
@@ -1217,7 +1217,7 @@ class PageStart(tk.Frame):
     def _update_files_server(self):
         """Updates server file list based on files found in path: self._server_data_path_nsf"""
         logger.debug('start: _update_files_server')
-        files = self.file_handler.get_file_names('server', 'nsf')
+        files = self.file_handler.get_file_names('server', 'data')
         self._files_server.update_items(files)
         logger.debug('end: _update_files_server')
 
