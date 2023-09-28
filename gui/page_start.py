@@ -88,9 +88,6 @@ class PageStart(tk.Frame):
         if not year:
             messagebox.showinfo('Inget år', 'Inget år är valt för processeringen')
             return
-        print(f'{self._file_handlers=}')
-        if self._file_handlers.get('2023'):
-            print(f"{self._file_handlers['2023']._files=}")
         return self._file_handlers.setdefault(year, get_seabird_file_handler(year=year))
 
     def update_file_handler(self):
