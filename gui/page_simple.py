@@ -739,7 +739,7 @@ class PageSimple(tk.Frame):
         year = self._year.value
         if not year:
             return
-        self.update_file_handler()
+        # self.update_file_handler()
         self._update_files()
 
     def update_file_handler(self):

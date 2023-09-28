@@ -88,6 +88,9 @@ class PageStart(tk.Frame):
         if not year:
             messagebox.showinfo('Inget år', 'Inget år är valt för processeringen')
             return
+        print(f'{self._file_handlers=}')
+        if self._file_handlers.get('2023'):
+            print(f"{self._file_handlers['2023']._files=}")
         return self._file_handlers.setdefault(year, get_seabird_file_handler(year=year))
 
     def update_file_handler(self):
@@ -668,7 +671,7 @@ class PageStart(tk.Frame):
         tkw.grid_configure(frame_missing_files, nr_rows=3)
 
         # Frame not updated
-        tk.Label(frame_not_updated_files, text='Filer som inte är updaterade på servern').grid(row=0, column=0)
+        tk.Label(frame_not_updated_files, text='Filer som inte är uppdaterade på servern').grid(row=0, column=0)
 
         listbox_prop = {'bg': '#fa8e8e'}
         listbox_prop.update(self._listbox_prop)
@@ -678,6 +681,7 @@ class PageStart(tk.Frame):
 
         self._button_continue_nsf_not_updated = tk.Button(frame_not_updated_files, text='Kopiera till servern',
                                                           command=self._callback_copy_not_updated_to_server)
+        self._button_continue_nsf_not_updated.config(state='disabled')
         self._button_continue_nsf_not_updated.grid(row=2, column=0, padx=5, pady=2, sticky='s')
         tkw.grid_configure(frame_not_updated_files, nr_rows=3)
 
@@ -1109,14 +1113,14 @@ class PageStart(tk.Frame):
         self._update_files_server()
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_not_on_server()
-        self._update_files_local_nsf_not_updated_on_server()
+        # self._update_files_local_nsf_not_updated_on_server()
 
     def _update_files_local_nsf(self):
         self._update_files_local_nsf_all()
         self._update_files_local_nsf_select()
         if self._server_data_path_root.value:
             self._update_files_local_nsf_not_on_server()
-            self._update_files_local_nsf_not_updated_on_server()
+            # self._update_files_local_nsf_not_updated_on_server()
         else:
             msg = 'Ingen rootkatlog för servern är satt. Kan inte uppdatera relaterade listor'
             logger.info(msg)
