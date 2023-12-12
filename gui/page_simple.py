@@ -28,10 +28,12 @@ from ..events import subscribe
 from ..saves import SaveComponents
 from ..utils import get_files_in_directory
 from ..utils import open_paths_in_default_program
+from .locales import Translator
 
+_ = Translator('page_simple', 'en').lang.gettext
 logger = logging.getLogger(__name__)
 
-LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka',
+LISTBOX_TITLES = dict(title_items=dict(text=_('Välj filer genom att dubbelklicka'),
                                        fg='red',
                                        font='Helvetica 12 bold'),
                       title_selected=dict(text='Valda filer',
@@ -806,5 +808,8 @@ def get_id_from_key(key):
 
 
 def get_year_from_key(key):
-    return key.split('_')[2][:4]
+    try:
+        return key.split('_')[2][:4]
+    except:
+        return "2023"
 
