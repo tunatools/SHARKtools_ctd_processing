@@ -625,8 +625,11 @@ class PageStart(tk.Frame):
                                                                   # end_with_folders=['data', '<YEAR>', 'raw'],
                                                                   row=0, column=0, columnspan=2, **layout)
 
-        self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=[_('Välj'), _('Alla')], row=1)
-        self._notebook_copy_to_server.select_frame(_('Alla'))
+#        self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=[_('Välj'), _('Alla')], row=1)
+#        self._notebook_copy_to_server.select_frame(_('Alla'))
+
+        self._notebook_copy_to_server = tkw.NotebookWidget(frame, frames=['Välj', 'Alla'], row=1)
+        self._notebook_copy_to_server.select_frame('Alla')
 
         tk.Button(frame, text=_('Gå till försystemet'), command=self._goto_pre_system).grid(row=2, padx=5, pady=2,
                                                                                          sticky='e')

@@ -1,15 +1,17 @@
 from sharkpylib.tklib import tkinter_widgets as tkw
 import tkinter as tk
+from .locales import Translator
 
+_ = Translator('packs_info', 'en').lang.gettext
 
 class PacksInfo(tk.Frame):
     suffixes = ['.txt', '.cnv', '.hex', '.hdr', '.bl', '.btl', '.ros', '.xmlcon', '.con', '.jpg', '.deliverynote',
                   '.metadata', '.sensorinfo']
-    compilation = ['Första tid', 'Sista tid',
-                    'Antal paket',
-                    'Antal paket med rätt nyckel',
-                    'Antal processerade paket',
-                    'Antal paket med standardformat']
+    compilation = [_('Första tid'), _('Sista tid'),
+                    _('Antal paket'),
+                    _('Antal paket med rätt nyckel'),
+                    _('Antal processerade paket'),
+                    _('Antal paket med standardformat')]
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -35,10 +37,10 @@ class PacksInfo(tk.Frame):
 
     def _build(self):
 
-        self._frame_key = tk.LabelFrame(self, text='Matchande nycklar')
+        self._frame_key = tk.LabelFrame(self, text=_('Matchande nycklar'))
         self._frame_key.grid(row=0, column=0)
 
-        self._notebook = tkw.NotebookWidget(self, frames=['Sammanställning', 'Metadata'], row=1, column=0)
+        self._notebook = tkw.NotebookWidget(self, frames=[_('Sammanställning'), _('Metadata')], row=1, column=0)
 
         tkw.grid_configure(self, nr_rows=2, nr_columns=0)
 
@@ -58,7 +60,7 @@ class PacksInfo(tk.Frame):
         tkw.grid_configure(frame, nr_rows=1, nr_columns=1)
 
     def _build_frame_compilation(self):
-        frame = self._notebook.get_frame('Sammanställning')
+        frame = self._notebook.get_frame(_('Sammanställning'))
         left_frame = tk.Frame(frame)
         left_frame.grid(row=0, column=0)
         right_frame = tk.Frame(frame)
@@ -79,25 +81,25 @@ class PacksInfo(tk.Frame):
         # Right frame
         r = 0
         for suffix, stringvar in self._stringvars_nr_files.items():
-            tk.Label(right_frame, text=f'Antal {suffix}-filer:').grid(row=r, column=0, **grid, sticky='e')
+            tk.Label(right_frame, text=_('Antal {}-filer:').format(suffix)).grid(row=r, column=0, **grid, sticky='e')
             tk.Label(right_frame, textvariable=stringvar).grid(row=r, column=1, **grid, sticky='w')
             r += 1
         tkw.grid_configure(right_frame, nr_rows=r, nr_columns=2)
 
     def _build_frame_metadata(self):
-        frame = self._notebook.get_frame('Metadata')
+        frame = self._notebook.get_frame(_('Metadata'))
         grid = dict(padx=5, pady=2)
         r = 0
         self._stringvar_meta_item = tk.StringVar()
-        tk.Label(frame, text=f'Metadatavariabel:').grid(row=r, column=0, **grid, sticky='e')
+        tk.Label(frame, text=_('Metadatavariabel:')).grid(row=r, column=0, **grid, sticky='e')
         self._entry_meta_item = tk.Entry(frame, textvariable=self._stringvar_meta_item)
         self._entry_meta_item.grid(row=r, column=1, **grid, sticky='w')
         self._entry_meta_item.bind('<Return>', self._update_metadata)
-        tk.Button(frame, text='Visa', command=self._update_metadata).grid(row=r, column=2, **grid, sticky='w')
+        tk.Button(frame, text=_('Visa'), command=self._update_metadata).grid(row=r, column=2, **grid, sticky='w')
         r += 1
 
         self._stringvar_meta_unique = tk.StringVar()
-        tk.Label(frame, text=f'Unika förekomster:').grid(row=r, column=0, **grid, sticky='e')
+        tk.Label(frame, text=_('Unika förekomster:')).grid(row=r, column=0, **grid, sticky='e')
         tk.Label(frame, textvariable=self._stringvar_meta_unique).grid(row=r, column=1, **grid, sticky='w')
         r += 1
 
@@ -149,10 +151,10 @@ class PacksInfo(tk.Frame):
     def _update_compilation(self):
         self._reset_compilation()
         compilation = self._selected_packs_info.get('compilation', {})
-        nr_packs = compilation['Antal paket']
+        nr_packs = compilation[_('Antal paket')]
         for key, value in compilation.items():
             self._stringvars_compilation[key].set(str(value))
-            if key.startswith('Antal') and value < nr_packs:
+            if key.startswith(_('Antal')) and value < nr_packs:
                 self._labels_compilation[key].configure(fg='red')
 
         nr_files = self._selected_packs_info.get('nr_files', {})
@@ -201,9 +203,9 @@ class PacksInfo(tk.Frame):
         compilation = {}
         time_format = '%Y-%m-%d %H:%M:%S (%A vecka %W)'
         sorted_packs = sorted(packs_list)
-        compilation['Första tid'] = sorted_packs[0].datetime.strftime(time_format)
-        compilation['Sista tid'] = sorted_packs[-1].datetime.strftime(time_format)
-        compilation['Antal paket'] = len(sorted_packs)
+        compilation[_('Första tid')] = sorted_packs[0].datetime.strftime(time_format)
+        compilation[_('Sista tid')] = sorted_packs[-1].datetime.strftime(time_format)
+        compilation[_('Antal paket')] = len(sorted_packs)
         nr_correct_keys = 0
         nr_processed_packs = 0
         nr_standard_format = 0
@@ -219,9 +221,9 @@ class PacksInfo(tk.Frame):
                 nr_standard_format += 1
             if pack.pattern == pack.key:
                 nr_correct_keys += 1
-        compilation['Antal processerade paket'] = nr_processed_packs
-        compilation['Antal paket med standardformat'] = nr_standard_format
-        compilation['Antal paket med rätt nyckel'] = nr_correct_keys
+        compilation[_('Antal processerade paket')] = nr_processed_packs
+        compilation[_('Antal paket med standardformat')] = nr_standard_format
+        compilation[_('Antal paket med rätt nyckel')] = nr_correct_keys
 
         info = dict(nr_files=nr_files,
                     compilation=compilation)

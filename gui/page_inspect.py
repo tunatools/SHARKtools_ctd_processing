@@ -18,7 +18,9 @@ from sharkpylib.tklib import tkinter_widgets as tkw
 from ..saves import SaveComponents
 
 from .packs_info import PacksInfo
+from .locales import Translator
 
+_ = Translator('page_inspect', 'en').lang.gettext
 
 class StringVar:
     def __init__(self, id_string=None):

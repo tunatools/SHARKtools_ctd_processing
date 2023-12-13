@@ -3,19 +3,21 @@
 
 from . import gui
 from .app import App
+from .gui.locales import Translator
 
+_ = Translator('init', 'en').lang.gettext
 
-INFO = dict(title='CTD-processering',
+INFO = dict(title=_('CTD-processering'),
             users_directory='users',
             sub_pages=[
                 dict(name='PageSimple',
-                     title='CTD-processering (Förenklad)'),
+                     title=_('CTD-processering (Förenklad)')),
                 dict(name='PageStart',
-                     title='CTD-processering (Avancerad)'),
+                     title=_('CTD-processering (Avancerad)')),
                 dict(name='PageInspect',
-                     title='Inspektera och behandla'),
+                     title=_('Inspektera och behandla')),
                 dict(name='PageEditRaw',
-                     title='Editera råfiler')
+                     title=_('Editera råfiler'))
                        ],
             user_page_class='PageUser')  # Must match name in ALL_PAGES in main app
 
