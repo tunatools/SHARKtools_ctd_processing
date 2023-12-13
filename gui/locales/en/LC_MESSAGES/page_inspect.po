@@ -283,58 +283,58 @@ msgid "{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" f�
 msgstr "{}\n\nChoose \"yes\" to try solving the problem. \nChoose \"no\" to solve the problem in the Seabird software. \nChoose \"quit\" to quit."
 
 msgid "Inspektera källmappen"
-msgstr ""
+msgstr "inspect source folder"
 
 msgid "Inspektera lokala rootmappen"
-msgstr ""
+msgstr "inspect local root folder"
 
 msgid "Välj lokal rotmapp"
-msgstr ""
+msgstr "choose local root folder"
 
 msgid "Välj ctd_config-mapp"
-msgstr ""
+msgstr "choose ctd config folder"
 
 msgid "Välj sharkweb data (radformat)"
-msgstr ""
+msgstr "choose sharkweb data (row format)"
 
-msgid "Mätprogram:')).grid(row=r, column=0, **grid, sticky='e"
-msgstr ""
+msgid "Mätprogram:"
+msgstr "measuring campaign"
 
 msgid "Kopiera filer till lokal mapp"
-msgstr ""
+msgstr "copy files to local folder"
 
 msgid "Skapa standardformat i lokal mapp"
-msgstr ""
+msgstr "create standard format in local folder"
 
 msgid "Kopiera till lokal mapp"
-msgstr ""
+msgstr "copy files to local folder"
 
 msgid "Inga paket valda!"
-msgstr ""
+msgstr "no package chosen!"
 
 msgid "Ingen lokal sökväg angiven!"
-msgstr ""
+msgstr "no local search path given!"
 
 msgid "{} paket har kopierats. "
-msgstr ""
+msgstr "{} packages have been copied"
 
 msgid "{} paket kunde inte skapas pga. att överskrivning av filer inte tilläts."
 msgstr "{} package could not be created because overwriting of files is not allowed"
 
 msgid ", Inga paket valda!"
-msgstr ""
+msgstr ", no package chosen!"
 
 msgid "Ingen sökväg till ctd_config angiven"
-msgstr ""
+msgstr "no search path to ctd_config given"
 
 msgid "Kan inte hitta sökvägen till angiven sharkweb-fil. "
-msgstr ""
+msgstr "cannot find search path to given sharkweb file"
 
 msgid "Vill du fortsätta utan den?"
-msgstr ""
+msgstr "would you like to proceed without it"
 
 msgid "Kunde inte skapa standardformatfiler pga. att överskrivning av filer inte tilläts."
-msgstr ""
+msgstr "could not create standard format files because overwriting is not allowed"
 
 msgid "Välj sharkweb-fil (radformat)"
-msgstr ""
+msgstr "choose sharkweb file (row format)"
