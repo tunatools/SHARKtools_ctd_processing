@@ -279,13 +279,8 @@ msgstr "Could not copy files to server. No files found to copy..."
 msgid "Filen finns redan. Använd avancerad processering om du vill processera igen\n{}"
 msgstr "File exists already. Use advanced processing if you would like to process the file again\n{}"
 
-
- _("{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" för att lösa problemet i seabird programvara. \nVälj \"Avbryt\" för att avbryta. ").format(e.data))
-
 msgid "{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" för att lösa problemet i seabird programvara. \nVälj \"Avbryt\" för att avbryta."
 msgstr "{}\n\nChoose \"yes\" to try solving the problem. \nChoose \"no\" to solve the problem in the Seabird software. \nChoose \"quit\" to quit."
-
-
 
 msgid "Inspektera källmappen"
 msgstr ""

@@ -1,0 +1,55 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Uppdatera metadata i råfiler"
+msgstr "update metadata in raw files"
+
+msgid "Ej valda serier"
+msgstr "no set of files chosen"
+
+msgid "Välj serier från mapp"
+msgstr "choose files from folder"
+
+msgid "Spara filer till mapp"
+msgstr "save files to folder"
+
+msgid "Välj SHARKweb-fil"
+msgstr "choose SHARKweb file"
+
+msgid "Välj LIMS-fil"
+msgstr "choose LIMS file"
+
+msgid "Uppdatera metadata"
+msgstr "update metadata"
+
+msgid "Ingen sharkweb-fil vald"
+msgstr "no sharkweb file chosen"
+
+msgid "Använd sharkweb-fil"
+msgstr "use sharkweb file"
+
+msgid "Updating metadata from {}"
+msgstr "updating metadata from {}"
+
+msgid "Ingen LIMS-file vald"
+msgstr "no LIMS file chosen"
+
+msgid "Använd LIMS-fil"
+msgstr "use LIMS file"
+
+msgid "Ingen mapp att spara till vald"
+msgstr "no folder chosen to save files"
+
+msgid "Inga filer valda"
+msgstr "no files chosen"
+
+msgid "Metadata har lagts till i {} profiler."
+msgstr "metadata has been added to {} profiles"
+
+msgid "Valda serier"
+msgstr "chosen set of files"
