@@ -1,0 +1,345 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Välj filer genom att dubbelklicka"
+msgstr "choose a file by double click"
+
+msgid "Valda filer"
+msgstr "chosen files"
+
+msgid "Inget år"
+msgstr "no year"
+
+msgid "Inget år är valt för processeringen"
+msgstr "No year chosen for processing"
+
+msgid "Börja här"
+msgstr "start here"
+
+msgid "Rotkatalog saknas"
+msgstr "root path is missing"
+
+msgid "Rotkatalog för configfiler saknas!"
+msgstr "root path for config files is missing"
+
+msgid "Skapa plottar"
+msgstr "create plots"
+
+msgid "Inga filer valda för att skapa plottar!"
+msgstr "no files chosen for plotting"
+
+msgid "Filer som ligger lokalt"
+msgstr "local files"
+
+msgid "Filer som ligger på servern"
+msgstr "files on server"
+
+msgid "Rotkatalog för configfiler:"
+msgstr "root path for config files"
+
+msgid "Skriv över filer"
+msgstr "overwrite files"
+
+msgid "Platform"
+msgstr "platform"
+
+msgid "År"
+msgstr "year"
+
+msgid "Generera gammalt filnamn"
+msgstr "generate old filename"
+
+msgid "Spara asvp filer här:"
+msgstr "save asvp sound speed profiles here:"
+
+msgid "Rotkatalog för lokal data:"
+msgstr "root path for local data"
+
+msgid "Uppdatera lokalt mappinnehåll mm."
+msgstr "update files in local folder"
+
+msgid "raw"
+msgstr "raw"
+
+msgid "cnv"
+msgstr "cnv"
+
+msgid "Granskning"
+msgstr "quality check"
+
+msgid "Standardformat"
+msgstr "standard format"
+
+msgid "FTP"
+msgstr "FTP"
+
+msgid "Välj källmapp"
+msgstr "choose source folder"
+
+msgid "filer"
+msgstr "files"
+
+msgid "Surfacesoak"
+msgstr "surface soak"
+
+msgid "Tau"
+msgstr "tau"
+
+msgid "Skapa asvp-filer"
+msgstr "create asvp files"
+
+msgid "Kör processering"
+msgstr "process files"
+
+msgid "Sökväg till lokala raw-filer:"
+msgstr "search path for local raw files"
+
+msgid "Sökväg till lokala cnv-filer:"
+msgstr "search path for local cnv files"
+
+msgid "Skapa standardformat"
+msgstr "create standard format"
+
+msgid "Sökväg till lokala standardformatfiler:"
+msgstr "search path for local standard format files"
+
+msgid "Tillåt automatisk granskning samma dag"
+msgstr "allow automatic quality control on the same day"
+
+msgid "1) Utför automatisk granskning"
+msgstr "1) run automatic quality control"
+
+msgid "2) Öppna manuell granskning"
+msgstr "2) open manual quality control in bokeh"
+
+msgid "3) Stäng manuell granskning"
+msgstr "3) close quality control in bokeh"
+
+msgid "Välj"
+msgstr "choose"
+
+msgid "Alla"
+msgstr "all"
+
+msgid "Gå till försystemet"
+msgstr "go to pre-system"
+
+msgid "Alla filer"
+msgstr "all files"
+
+msgid "Kopiera ALLT till servern"
+msgstr "copy ALL files to server"
+
+msgid "Filer som inte finns på servern"
+msgstr "files that are not on server"
+
+msgid "Kopiera till servern"
+msgstr "copy to server"
+
+msgid "Filer som inte är uppdaterade på servern"
+msgstr "files that are not updated on server"
+
+msgid "Kopiera valda till servern"
+msgstr "copy all chosen files to server"
+
+msgid "Rotkatalog för data på servern:"
+msgstr "root path for data on server"
+
+msgid "Sökväg till standardformatfiler på servern:"
+msgstr "search path to standard format files on server"
+
+msgid "Aktivera tau"
+msgstr "activate tau correction"
+
+msgid "Är du sRäker på att du vill aktivera tau-korrektion?"
+msgstr "Are you sure that you want to activate the tau correction?"
+
+msgid "Inga filer är valda för granskning!"
+msgstr "no files chosen for quality control"
+
+msgid "Automatisk granskning"
+msgstr "automatic quality control"
+
+msgid "Valda filer är redan granskade idag. \nIngen granskning gjord!"
+msgstr "Chosen files have already been quality checked today. \nNo quality check performed!"
+
+msgid "{} av {} granskade!"
+msgstr "{} of {} files have been quality controlled"
+
+msgid "ALLT filer har kopierats till servern"
+msgstr "ALL files have been copied to the server"
+
+msgid "Saknade filer har kopierats till servern"
+msgstr "missing files have been copied to the server"
+
+msgid "Alla icke uppdaterade filer har kopierats till servern"
+msgstr "all not updated files have been copied to the server"
+
+msgid "Valda filer har kopierats till servern"
+msgstr "chosen files have been copied to the server"
+
+msgid "Inga CNV filer valda för att skapa standardformat!"
+msgstr "no cnv files were chosen to create standard format"
+
+msgid "Skapar standardformat"
+msgstr "create standard format"
+
+msgid "Det verkar som att en fil är öppen. Stäng den och försök igen: {}"
+msgstr "It seems like one file is open. Close the file and try again: {}"
+
+msgid Internt fel: \n{}"
+msgstr "internal error: \n{}"
+
+msgid "Ingen rotkatalog för ctd_config vald!"
+msgstr "no root path chosen for ctd_config"
+
+msgid "Ingen rotkatalog för lokal data vald!"
+msgstr "no root path chosen for local data"
+
+msgid "Ingen platform vald!"
+msgstr "no platform chosen"
+
+msgid "Ingen surfacesoak vald!"
+msgstr "no surface soak chosen"
+
+msgid "Ingen filer är valda för processering!"
+msgstr "no files chosen for processing"
+
+msgid "Mismatch mellan filer"
+msgstr "mismatch between files"
+
+msgid "Något gick fel"
+msgstr "something went wrong"
+
+msgid "Ingen rootkatlog för servern är satt. Kan inte uppdatera relaterade listor"
+msgstr "No root path set to server. Cannot update related lists."
+
+msgid "Updaterar listor på standardformatet"
+msgstr "update lists in standard format"
+
+msgid "Processering"
+msgstr "processing"
+
+msgid "Sökvägar"
+msgstr "search paths"
+
+msgid "Skicka via FTP"
+msgstr "send via FTP"
+
+msgid "Val"
+msgstr "choose"
+
+msgid "Filer i källmappen"
+msgstr "files in source folder"
+
+msgid "Vad vill du göra?"
+msgstr "What would you like to do?"
+
+msgid "Ta bort gamla asvp-filer"
+msgstr "delete old asvp files"
+
+msgid "Uppdatera"
+msgstr "update"
+
+msgid "profiler finns i källmappen"
+msgstr "profiles are not in source folder"
+
+msgid "profiler i källmappen finns inte lokalt"
+msgstr "profiles are in source folder but not in local data path"
+
+msgid "profiler i källmappen finns inte på servern"
+msgstr "profiles in source folder are not on the server"
+
+msgid "profiler i källmappen finns varken lokalt eller på servern"
+msgstr "profiles in source folder are neither in local data path nor on the server"
+
+msgid "Processera"
+msgstr "processing"
+
+msgid "Öppna manuell granskning"
+msgstr "open bokeh quality control"
+
+msgid "Stäng manuell granskning\nKopiera till server"
+msgstr "close bokeh quality control\ncopy to server"
+
+msgid "Ingen rotkatalog för data på servern vald!"
+msgstr "no root path chosen for server"
+
+msgid "Inga filer att granska!"
+msgstr "no files to check"
+
+msgid "Kunde inte kopiera till server. Hittar inga filer att kopiera..."
+msgstr "Could not copy files to server. No files found to copy..."
+
+msgid "Filen finns redan. Använd avancerad processering om du vill processera igen\n{}"
+msgstr "File exists already. Use advanced processing if you would like to process the file again\n{}"
+
+
+ _("{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" för att lösa problemet i seabird programvara. \nVälj \"Avbryt\" för att avbryta. ").format(e.data))
+
+msgid "{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" för att lösa problemet i seabird programvara. \nVälj \"Avbryt\" för att avbryta."
+msgstr "{}\n\nChoose \"yes\" to try solving the problem. \nChoose \"no\" to solve the problem in the Seabird software. \nChoose \"quit\" to quit."
+
+
+
+msgid "Inspektera källmappen"
+msgstr ""
+
+msgid "Inspektera lokala rootmappen"
+msgstr ""
+
+msgid "Välj lokal rotmapp"
+msgstr ""
+
+msgid "Välj ctd_config-mapp"
+msgstr ""
+
+msgid "Välj sharkweb data (radformat)"
+msgstr ""
+
+msgid "Mätprogram:')).grid(row=r, column=0, **grid, sticky='e"
+msgstr ""
+
+msgid "Kopiera filer till lokal mapp"
+msgstr ""
+
+msgid "Skapa standardformat i lokal mapp"
+msgstr ""
+
+msgid "Kopiera till lokal mapp"
+msgstr ""
+
+msgid "Inga paket valda!"
+msgstr ""
+
+msgid "Ingen lokal sökväg angiven!"
+msgstr ""
+
+msgid "{} paket har kopierats. "
+msgstr ""
+
+msgid "{} paket kunde inte skapas pga. att överskrivning av filer inte tilläts."
+msgstr "{} package could not be created because overwriting of files is not allowed"
+
+msgid ", Inga paket valda!"
+msgstr ""
+
+msgid "Ingen sökväg till ctd_config angiven"
+msgstr ""
+
+msgid "Kan inte hitta sökvägen till angiven sharkweb-fil. "
+msgstr ""
+
+msgid "Vill du fortsätta utan den?"
+msgstr ""
+
+msgid "Kunde inte skapa standardformatfiler pga. att överskrivning av filer inte tilläts."
+msgstr ""
+
+msgid "Välj sharkweb-fil (radformat)"
+msgstr ""

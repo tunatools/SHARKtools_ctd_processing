@@ -12,10 +12,15 @@ from ...events import subscribe
 from ...events import post_event
 from ...saves import SaveComponents
 
-LISTBOX_TITLES = dict(title_items=dict(text='Välj filer genom att dubbelklicka',
+from ..locales import Translator
+
+_ = Translator('ftp_frame', 'en').lang.gettext
+
+
+LISTBOX_TITLES = dict(title_items=dict(text=_('Välj filer genom att dubbelklicka'),
                                        fg='red',
                                        font='Helvetica 12 bold'),
-                      title_selected=dict(text='Valda filer',
+                      title_selected=dict(text=_('Valda filer'),
                                           fg='red',
                                           font='Helvetica 12 bold'),)
 
@@ -49,7 +54,7 @@ class FtpFrame(tk.Frame):
         self._save_obj.save()
 
     def _get_ftp_title(self):
-        return f'Filer på FTP: {self._get_ftp_destination()}'
+        return _('Filer på FTP: {}').format(self._get_ftp_destination())
 
     def _get_ftp_destination(self):
         cred = self.ftp_credentials
@@ -71,7 +76,7 @@ class FtpFrame(tk.Frame):
 
         # Left frame
         self._local_data_path_ftp = components.DirectoryLabelText(left_frame, 'local_data_path_ftp',
-                                                                  title='Sökväg till lokala standardformatfiler:',
+                                                                  title=_('Sökväg till lokala standardformatfiler:'),
                                                                   disabled=True,
                                                                   row=0, column=0,
                                                                   columnspan=2, **layout)
@@ -80,7 +85,7 @@ class FtpFrame(tk.Frame):
         listbox_prop.update(self._listbox_prop)
         self._files_local_ftp = tkw.ListboxSelectionWidget(left_frame, row=1, column=0,
                                                            columnspan=2,
-                                                           count_text='filer',
+                                                           count_text=_('filer'),
                                                            only_unique_items=False,
                                                            sort_items=False,
                                                            prop=listbox_prop,
@@ -88,16 +93,16 @@ class FtpFrame(tk.Frame):
                                                            **layout)
 
         self._ftp_credentials_path = components.FilePathButtonText(left_frame, 'ftp_credentials_path',
-                                                                   title='Sökväg till inloggningsuppgifter till FTP',
+                                                                   title=_('Sökväg till inloggningsuppgifter till FTP'),
                                                                    row=2, column=0, **layout)
 
         tkw.grid_configure(left_frame, nr_rows=3, nr_columns=1)
 
         # Right frame
-        self._ftp_test_checkbutton = tkw.CheckbuttonWidgetSingle(right_frame, name='Skicka till test',
+        self._ftp_test_checkbutton = tkw.CheckbuttonWidgetSingle(right_frame, name=_('Skicka till test'),
                                                                  callback=self._on_toggle_ftp_test, row=0, column=0, **layout)
 
-        self._also_send_cnv_files = tkw.CheckbuttonWidgetSingle(right_frame, name='Skicka även cnv-filer', row=1, column=0, **layout)
+        self._also_send_cnv_files = tkw.CheckbuttonWidgetSingle(right_frame, name=_('Skicka även cnv-filer'), row=1, column=0, **layout)
 
         self._stringvar_title_ftp = tk.StringVar()
         tk.Label(right_frame, textvariable=self._stringvar_title_ftp).grid(row=2, column=0, **layout)
@@ -112,11 +117,11 @@ class FtpFrame(tk.Frame):
         self._label_ftp_status = tk.Label(right_frame, textvariable=self._stringvar_ftp_status)
         self._label_ftp_status.grid(row=4, column=0, **layout)
 
-        self._button_send_files_via_ftp = tk.Button(right_frame, text='Skicka filer via ftp',
+        self._button_send_files_via_ftp = tk.Button(right_frame, text=_('Skicka filer via ftp'),
                                                     command=self._callback_continue_ftp)
         self._button_send_files_via_ftp.grid(row=4, column=1, padx=5, pady=2, sticky='se')
 
-        self._button_back_to_pre_system = tk.Button(right_frame, text='Till Försystemet',
+        self._button_back_to_pre_system = tk.Button(right_frame, text=_('Till Försystemet'),
                                                     command=self._callback_pre_system)
         self._button_back_to_pre_system.grid(row=5, column=1, padx=5, pady=2, sticky='se')
 
@@ -156,15 +161,15 @@ class FtpFrame(tk.Frame):
 
         cred = self.ftp_credentials
         if not cred:
-            messagebox.showwarning('Skicka till FTP', 'Sökvägen till inloggningsuppgifter saknas eller är fel!')
+            messagebox.showwarning(_('Skicka till FTP'), _('Sökvägen till inloggningsuppgifter saknas eller är fel!'))
             return
 
         files = self._files_local_ftp.get_selected()
         if not files:
-            messagebox.showwarning('Skicka till FTP', 'Inga filer valda att skicka till ftp!')
+            messagebox.showwarning(_('Skicka till FTP'), _('Inga filer valda att skicka till ftp!'))
             return
 
-        self._update_ftp_status('Börjar skicka filer...')
+        self._update_ftp_status(_('Börjar skicka filer...'))
 
         try:
             directory = self._local_data_path_ftp.get()
@@ -175,14 +180,14 @@ class FtpFrame(tk.Frame):
             obj.send_files()
             self._files_local_ftp.deselect_all()
             self._update_files_ftp()
-
-            messagebox.showinfo('Skicka till FTP',
-                                f'{len(paths)} filer har skickats till {self._get_ftp_destination()}')
+            breakpoint()
+            messagebox.showinfo(_('Skicka till FTP'),
+                                _('{} filer har skickats till {}').format(len(paths),self._get_ftp_destination()))
         except ftp.FtpConnectionError:
-            messagebox.showerror('Skicka filer till FTP', 'Kunde inte skicka filer. Kunde inte koppla upp mot ftp. Internet kanske inte fungerar.')
+            messagebox.showerror(_('Skicka filer till FTP'), _('Kunde inte skicka filer. Kunde inte koppla upp mot ftp. Internet kanske inte fungerar.'))
         except:
-            messagebox.showerror('Skicka filer till FTP',
-                                 f'Något gick fel: {traceback.format_exc()}')
+            messagebox.showerror(_('Skicka filer till FTP'),
+                                 _('Något gick fel: {}').format(traceback.format_exc()))
         finally:
             self._update_ftp_status('')
 
@@ -193,7 +198,7 @@ class FtpFrame(tk.Frame):
         tail = '...'
         if percent == 100:
             tail = '!'
-        self._update_ftp_status(f'{percent}% ({t} av {n} filer) skickat{tail}')
+        self._update_ftp_status(_('{}% ({} av {} filer) skickat{}').format(percent,t,n,tail))
 
     def _update_ftp_status(self, string):
         self._stringvar_ftp_status.set(string)

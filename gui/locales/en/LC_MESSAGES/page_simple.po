@@ -5,7 +5,146 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=n==0 ? 0 : n==1 ? 1 : 2;\n"
 
 msgid "Välj filer genom att dubbelklicka"
-msgstr "Choose a file by double click"
+msgstr "choose a file by double click"
+
+msgid "Valda filer"
+msgstr "chosen files"
+
+msgid "Processering"
+msgstr "processing"
+
+msgid "Sökvägar"
+msgstr "search paths"
+
+msgid "Skicka via FTP"
+msgstr "send via FTP"
+
+msgid "Inget år"
+msgstr "no year"
+
+msgid "Val"
+msgstr "choose"
+
+msgid "Filer i källmappen"
+msgstr "files in source folder"
+
+msgid "Vad vill du göra?"
+msgstr "What would you like to do?"
+
+msgid "Rotkatalog för configfiler:"
+msgstr "root path for config files"
+
+msgid "Välj källmapp"
+msgstr "choose source folder"
+
+msgid "Rotkatalog för lokal data:"
+msgstr "root path for local data"
+
+msgid "Rotkatalog för data på servern:"
+msgstr "root path for data on server"
+
+msgid "Spara asvp filer här:"
+msgstr "save asvp sound speed profiles here:"
+
+msgid "Ta bort gamla asvp-filer"
+msgstr "delete old asvp files"
+
+msgid "År"
+msgstr "year"
+
+msgid "Uppdatera"
+msgstr "update"
+
+msgid "Platform"
+msgstr "platform"
+
+msgid "Surfacesoak"
+msgstr "surface soak"
+
+msgid "Generera gammalt filnamn"
+msgstr "generate old filename"
+
+msgid "profiler finns i källmappen"
+msgstr "profiles are not in source folder"
+
+msgid "profiler i källmappen finns inte lokalt"
+msgstr "profiles are in source folder but not in local data path"
+
+msgid "profiler i källmappen finns inte på servern"
+msgstr "profiles in source folder are not on the server"
+
+msgid "profiler i källmappen finns varken lokalt eller på servern"
+msgstr ""
+"profiles in source folder are neither in local data path nor on the server"
+
+msgid "filer"
+msgstr "files"
+
+msgid "Processera"
+msgstr "processing"
+
+msgid "Öppna manuell granskning"
+msgstr "open bokeh quality control"
+
+msgid ""
+"Stäng manuell granskning\n"
+"Kopiera till server"
+msgstr ""
+"close bokeh quality control\n"
+"copy to server"
+
+msgid "Kör processering"
+msgstr "process files"
+
+msgid "Ingen rotkatalog för ctd_config vald!"
+msgstr "no root path chosen for ctd_config"
+
+msgid "Ingen rotkatalog för lokal data vald!"
+msgstr "no root path chosen for local data"
+
+msgid "Ingen rotkatalog för data på servern vald!"
+msgstr "no root path chosen for server"
+
+msgid "Ingen platform vald!"
+msgstr "no platform chosen"
+
+msgid "Ingen surfacesoak vald!"
+msgstr "no surface soak chosen"
+
+msgid "Ingen filer är valda för processering!"
+msgstr "no files chosen for processing"
+
+msgid "Något gick fel"
+msgstr "something went wrong"
+
+msgid "Skapar standardformat"
+msgstr "create standard format"
+
+msgid "Inga CNV filer valda för att skapa standardformat!"
+msgstr "no cnv files were chosen to create standard format"
+
+msgid "Skapa standardformat"
+msgstr "create standard format"
+
+msgid "Automatisk granskning"
+msgstr "automatic quality control"
+
+msgid "Inga filer att granska!"
+msgstr "no files to check"
+
+msgid "Kunde inte kopiera till server. Hittar inga filer att kopiera..."
+msgstr "Could not copy files to server. No files found to copy..."
+
+msgid "Inget år är valt för processeringen"
+msgstr "No year chosen for processing"
+
+msgid "Filen finns redan. Använd avancerad processering om du vill processera igen\n{}"
+msgstr "File exists already. Use advanced processing if you would like to process the file again\n{}"
+
+msgid "{}\n\nVälj \"Ja\" för att försöka lösa problemet. \nVälj \"Nej\" för att lösa problemet i seabird programvara. \nVälj \"Avbryt\" för att avbryta."
+msgstr "{}\n\n Choose \"yes\" to try solving the problem. \nChoose \"no\" to solve the problem in the Seabird software. \nChoose \"quit\" to quit."
+
+msgid "Mismatch mellan filer"
+msgstr "mismatch between files"

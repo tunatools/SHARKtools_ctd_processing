@@ -1,0 +1,67 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Välj filer genom att dubbelklicka"
+msgstr "choose a file by double click"
+
+msgid "Valda filer"
+msgstr "chosen files"
+
+msgid "Filer på FTP: {}"
+msgstr "files on FTP: {}"
+
+msgid "Sökväg till lokala standardformatfiler:"
+msgstr "search path to local files in standard format"
+
+msgid "filer"
+msgstr "files"
+
+msgid "Sökväg till inloggningsuppgifter till FTP"
+msgstr "search path to login credentials for FTP"
+
+msgid "Skicka till test"
+msgstr "send to test"
+
+msgid "Skicka även cnv-filer"
+msgstr "send cnv-files as well"
+
+msgid "Skicka filer via ftp"
+msgstr "send files via FTP"
+
+msgid "Till Försystemet"
+msgstr "to pre-system"
+
+msgid "Skicka till FTP"
+msgstr "sent to FTP"
+
+msgid "Sökvägen till inloggningsuppgifter saknas eller är fel!"
+msgstr "search path to login credentials is missing or wrong"
+
+msgid "Inga filer valda att skicka till ftp!"
+msgstr "no files chosen to send to FTP"
+
+msgid "Börjar skicka filer..."
+msgstr "starting to send files..."
+
+msgid "{} filer har skickats till {}"
+msgstr "{} files have been send to {}"
+
+msgid "Skicka filer till FTP"
+msgstr "send files to FTP"
+
+msgid "Kunde inte skicka filer. Kunde inte koppla upp mot ftp. Internet kanske inte fungerar."
+msgstr "Sending files failed. Could not connect to FTP. Check your internet connection."
+
+msgid "Skicka filer till FTP"
+msgstr "send files to FTP"
+
+msgid "Något gick fel: {}"
+msgstr "something went wrong"
+
+msgid "{}% ({} av {} filer) skickat{}"
+msgstr "{}% ({} of {} files) have been sent{}"

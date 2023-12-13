@@ -73,14 +73,14 @@ class PageInspect(tk.Frame):
     def _build(self):
         self._create_stringvars()
 
-        self._frame_paths = tk.LabelFrame(self, text='Sökvägar')
+        self._frame_paths = tk.LabelFrame(self, text=_('Sökvägar'))
         self._frame_paths.grid(row=0, column=0)
 
-        self._frame_create = tk.LabelFrame(self, text='Skapa standardformat')
+        self._frame_create = tk.LabelFrame(self, text=_('Skapa standardformat'))
         self._frame_create.grid(row=0, column=1)
 
-        self._notebook = tkw.NotebookWidget(self, frames=['Inspektera källmappen',
-                                                          'Inspektera lokala rootmappen'], row=1, column=0, columnspan=2)
+        self._notebook = tkw.NotebookWidget(self, frames=[_('Inspektera källmappen'),
+                                                          _('Inspektera lokala rootmappen')], row=1, column=0, columnspan=2)
 
         tkw.grid_configure(self, nr_rows=2, nr_columns=2)
 
@@ -95,11 +95,11 @@ class PageInspect(tk.Frame):
         opt = dict(width=30)
         grid = dict(padx=5, pady=5)
 
-        tk.Button(frame, text='Välj källmapp', command=self._select_source_dir, **opt).grid(row=r, column=0, **grid)
+        tk.Button(frame, text=_('Välj källmapp'), command=self._select_source_dir, **opt).grid(row=r, column=0, **grid)
         tk.Label(frame, textvariable=self._stringvars_path['source_dir']()).grid(row=r, column=1, **grid,
                                                                                  sticky='w')
         r += 1
-        tk.Button(frame, text='Välj lokal rotmapp', command=self._select_local_dir, **opt).grid(row=r, column=0, **grid)
+        tk.Button(frame, text=_('Välj lokal rotmapp'), command=self._select_local_dir, **opt).grid(row=r, column=0, **grid)
         tk.Label(frame, textvariable=self._stringvars_path['local_dir']()).grid(row=r, column=1, **grid,
                                                                                 sticky='w')
 
@@ -111,34 +111,34 @@ class PageInspect(tk.Frame):
         opt = dict(width=30)
         grid = dict(padx=5, pady=5)
 
-        tk.Button(frame, text='Välj ctd_config-mapp', command=self._select_ctd_config_dir, **opt).grid(row=r, column=0, **grid)
+        tk.Button(frame, text=_('Välj ctd_config-mapp'), command=self._select_ctd_config_dir, **opt).grid(row=r, column=0, **grid)
         tk.Label(frame, textvariable=self._stringvars_path['ctd_config_dir']()).grid(row=r, column=1, **grid,
                                                                                  sticky='w')
         r += 1
-        tk.Button(frame, text='Välj sharkweb data (radformat)', command=self._select_sharkweb_path, **opt).grid(row=r, column=0, **grid)
+        tk.Button(frame, text=_('Välj sharkweb data (radformat)'), command=self._select_sharkweb_path, **opt).grid(row=r, column=0, **grid)
         tk.Label(frame, textvariable=self._stringvars_path['sharkweb_path']()).grid(row=r, column=1, **grid,
                                                                                 sticky='w')
 
         r += 1
-        tk.Label(frame, text='Mätprogram:').grid(row=r, column=0, **grid, sticky='e')
+        tk.Label(frame, text=_('Mätprogram:')).grid(row=r, column=0, **grid, sticky='e')
         self._stringvar_mprog = tk.StringVar()
         tk.Entry(frame, textvariable=self._stringvar_mprog).grid(row=r, column=1, **grid, sticky='w')
 
         r += 1
         self._intvar_overwrite = tk.IntVar()
-        tk.Checkbutton(frame, text='Skriv över filer', variable=self._intvar_overwrite).grid(row=r, column=1, **grid,
+        tk.Checkbutton(frame, text=_('Skriv över filer'), variable=self._intvar_overwrite).grid(row=r, column=1, **grid,
                                                                                              sticky='w')
         r += 1
-        tk.Button(frame, text='Kopiera filer till lokal mapp',
+        tk.Button(frame, text=_('Kopiera filer till lokal mapp'),
                   command=self._copy_to_local, **opt).grid(row=r, column=0, **grid)
 
-        tk.Button(frame, text='Skapa standardformat i lokal mapp',
+        tk.Button(frame, text=_('Skapa standardformat i lokal mapp'),
                   command=self._create_standard_format, **opt).grid(row=r, column=1, **grid)
 
         tkw.grid_configure(frame, nr_rows=r+1, nr_columns=2)
 
     def _build_source_frame(self):
-        frame = self._notebook.get_frame('Inspektera källmappen')
+        frame = self._notebook.get_frame(_('Inspektera källmappen'))
 
         grid = dict(padx=5, pady=5)
         r = 0
@@ -147,7 +147,7 @@ class PageInspect(tk.Frame):
         tkw.grid_configure(frame, nr_rows=r + 1, nr_columns=2)
 
     def _build_local_frame(self):
-        frame = self._notebook.get_frame('Inspektera lokala rootmappen')
+        frame = self._notebook.get_frame(_('Inspektera lokala rootmappen'))
         grid = dict(padx=5, pady=5)
         r = 0
         self._info_frame_local = PacksInfo(frame)
@@ -159,11 +159,11 @@ class PageInspect(tk.Frame):
         overwrite = bool(self._intvar_overwrite.get())
         local_root_path = self._stringvars_path['local_dir'].get()
         if not packs:
-            messagebox.showwarning('Kopiera till lokal mapp', 'Inga paket valda!')
+            messagebox.showwarning(_('Kopiera till lokal mapp'), _('Inga paket valda!'))
             return
 
         if not local_root_path or not Path(local_root_path).exists():
-            messagebox.showwarning('Kopiera till lokal mapp', 'Ingen lokal sökväg angiven!')
+            messagebox.showwarning(_('Kopiera till lokal mapp'), _('Ingen lokal sökväg angiven!'))
             return
         sbe_paths = SBEPaths()
         sbe_paths.set_local_root_directory(local_root_path)
@@ -175,10 +175,10 @@ class PageInspect(tk.Frame):
                 nr_created += 1
             except FileExistsError:
                 nr_not_created += 1
-        text = f'{nr_created} paket har kopierats. '
+        text = _('{} paket har kopierats. ').format(nr_created)
         if nr_not_created:
-            text = text + f'{nr_not_created} paket kunde inte skapas pga. att överskrivning av filer inte tilläts.'
-        messagebox.showinfo('Kopiera till lokal mapp', text)
+            text = text + _('{} paket kunde inte skapas pga. att överskrivning av filer inte tilläts.').format(nr_not_created)
+        messagebox.showinfo(_('Kopiera till lokal mapp'), text)
         self._on_select_local_dir()
 
     def _create_standard_format(self):
@@ -189,20 +189,20 @@ class PageInspect(tk.Frame):
         mprog = self._stringvar_mprog.get().strip() or None
 
         if not packs:
-            messagebox.showwarning('Skapa standardformat', 'Inga paket valda!')
+            messagebox.showwarning(_('Skapa standardformat'), _('Inga paket valda!'))
             return
 
         if not local_root_path or not Path(local_root_path).exists():
-            messagebox.showwarning('Skapa standardformat', 'Ingen lokal sökväg angiven!')
+            messagebox.showwarning(_('Skapa standardformat'), _('Ingen lokal sökväg angiven!'))
             return
 
         if not ctd_config_path or not Path(ctd_config_path).exists():
-            messagebox.showwarning('Skapa standardformat', 'Ingen sökväg till ctd_config angiven')
+            messagebox.showwarning(_('Skapa standardformat'), _('Ingen sökväg till ctd_config angiven'))
             return
 
         if sharkweb_path and not Path(sharkweb_path).exists():
-            ans = messagebox.askyesno('Skapa standardformat', 'Kan inte hitta sökvägen till angiven sharkweb-fil. '
-                                                        'Vill du fortsätta utan den?')
+            ans = messagebox.askyesno(_('Skapa standardformat'), _('Kan inte hitta sökvägen till angiven sharkweb-fil. '),
+                                                        _('Vill du fortsätta utan den?'))
             self._stringvars_path['sharkweb_path'].set('')
             sharkweb_path = None
             if not ans:
@@ -218,30 +218,30 @@ class PageInspect(tk.Frame):
                                                                )
             self._on_select_local_dir()
         except FileExistsError:
-            messagebox.showwarning('Skapa standardformat', 'Kunde inte skapa standardformatfiler pga. att överskrivning av filer inte tilläts.')
+            messagebox.showwarning(_('Skapa standardformat'), _('Kunde inte skapa standardformatfiler pga. att överskrivning av filer inte tilläts.'))
 
     def _select_source_dir(self):
-        directory = filedialog.askdirectory(title='Välj källmapp')
+        directory = filedialog.askdirectory(title=_('Välj källmapp'))
         if not directory:
             return
         self._stringvars_path['source_dir'].set(directory)
         self._on_select_source_dir()
 
     def _select_local_dir(self):
-        directory = filedialog.askdirectory(title='Välj lokal rotmapp')
+        directory = filedialog.askdirectory(title=_('Välj lokal rotmapp'))
         if not directory:
             return
         self._stringvars_path['local_dir'].set(directory)
         self._on_select_local_dir()
 
     def _select_ctd_config_dir(self):
-        directory = filedialog.askdirectory(title='Välj ctd_config-mapp')
+        directory = filedialog.askdirectory(title=_('Välj ctd_config-mapp'))
         if not directory:
             return
         self._stringvars_path['ctd_config_dir'].set(directory)
 
     def _select_sharkweb_path(self):
-        path = filedialog.askopenfilename(title='Välj sharkweb-fil (radformat)')
+        path = filedialog.askopenfilename(title=_('Välj sharkweb-fil (radformat)'))
         if not path:
             return
         self._stringvars_path['sharkweb_path'].set(path)

@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 LISTBOX_TITLES = dict(title_items=dict(text=_('Välj filer genom att dubbelklicka'),
                                        fg='red',
                                        font='Helvetica 12 bold'),
-                      title_selected=dict(text='Valda filer',
+                      title_selected=dict(text=_('Valda filer'),
                                           fg='red',
                                           font='Helvetica 12 bold'),)
 
@@ -110,7 +110,7 @@ class PageSimple(tk.Frame):
         self._callback_change_year()
         self._update_lists()
         self._save_obj.load(component=self._surfacesoak, user=self.user.name)
-        self._notebook.select_frame('Processering')
+        self._notebook.select_frame(_('Processering'))
 
     def close(self):
         self._close_manual_qc()
@@ -130,10 +130,10 @@ class PageSimple(tk.Frame):
                       pady=20,
                       sticky='nsew')
 
-        self._frame_paths = tk.LabelFrame(self, text='Sökvägar')
+        self._frame_paths = tk.LabelFrame(self, text=_('Sökvägar'))
         self._frame_paths.grid(row=0, column=0, **layout)
 
-        self._notebook = tkw.NotebookWidget(self, frames=['Processering', 'Skicka via FTP'], row=1, column=0, **layout)
+        self._notebook = tkw.NotebookWidget(self, frames=[_('Processering'), _('Skicka via FTP')], row=1, column=0, **layout)
 
         tkw.grid_configure(self, nr_rows=2)
 
@@ -141,18 +141,18 @@ class PageSimple(tk.Frame):
         self._build_ftp_frame()
 
     def _build_processing_frame(self):
-        frame = self._notebook.get_frame('Processering')
+        frame = self._notebook.get_frame(_('Processering'))
         layout = dict(padx=20,
                       pady=20,
                       sticky='nsew')
 
-        self._frame_options = tk.LabelFrame(frame, text='Val')
+        self._frame_options = tk.LabelFrame(frame, text=_('Val'))
         self._frame_options.grid(row=0, column=0, **layout)
 
-        self._frame_files = tk.LabelFrame(frame, text='Filer i källmappen')
+        self._frame_files = tk.LabelFrame(frame, text=_('Filer i källmappen'))
         self._frame_files.grid(row=0, column=1, **layout)
 
-        self._frame_actions = tk.LabelFrame(frame, text='Vad vill du göra?')
+        self._frame_actions = tk.LabelFrame(frame, text=_('Vad vill du göra?'))
         self._frame_actions.grid(row=0, column=2, **layout)
 
         tkw.grid_configure(frame, nr_rows=1, nr_columns=3)
@@ -163,7 +163,7 @@ class PageSimple(tk.Frame):
         self._build_frame_actions()
 
     def _build_ftp_frame(self):
-        frame = self._notebook.get_frame('Skicka via FTP')
+        frame = self._notebook.get_frame(_('Skicka via FTP'))
         layout = dict(padx=20,
                       pady=20,
                       sticky='nsew')
@@ -182,39 +182,39 @@ class PageSimple(tk.Frame):
 
         r = 0
         self._config_path = components.DirectoryLabelText(frame, 'config_path',
-                                                                   title='Rotkatalog för configfiler:',
+                                                                   title=_('Rotkatalog för configfiler:'),
                                                                    row=r, column=0, **layout)
 
         r += 1
         self._local_data_path_source = components.DirectoryButtonText(frame, 'local_data_path_source',
-                                                                      title='Välj källmapp',
+                                                                      title=_('Välj källmapp'),
                                                                       row=r, column=0, **layout)
 
         r += 1
         self._local_data_path_root = components.DirectoryLabelText(frame, 'local_data_path_root',
-                                                                          title='Rotkatalog för lokal data:',
+                                                                          title=_('Rotkatalog för lokal data:'),
                                                                           row=r, column=0, **layout)
 
         r += 1
         self._server_data_path_root = components.DirectoryButtonText(frame, 'server_data_path_root',
-                                                                      title='Rotkatalog för data på servern:',
+                                                                      title=_('Rotkatalog för data på servern:'),
                                                                       row=r, column=0, **layout)
 
         r += 1
         self._asvp_files_directory = components.DirectoryButtonText(frame, 'asvp_files_directory',
-                                                                     title='Spara asvp filer här:',
+                                                                     title=_('Spara asvp filer här:'),
                                                                      row=r, column=0, **layout)
 
         r += 1
-        self._delete_old_asvp_files = components.Checkbutton(frame, 'delete_old_asvp_files', title='Ta bort gamla asvp-filer', row=r,
+        self._delete_old_asvp_files = components.Checkbutton(frame, 'delete_old_asvp_files', title=_('Ta bort gamla asvp-filer'), row=r,
                                                column=0, **layout)
 
         r += 1
-        self._year = components.YearEntry(frame, 'year', title='År', row=r, column=0, **layout)
+        self._year = components.YearEntry(frame, 'year', title=_('År'), row=r, column=0, **layout)
         self._year.set(str(datetime.datetime.now().year))
 
         r += 1
-        self._button_update = tk.Button(self._frame_paths, text='Uppdatera',
+        self._button_update = tk.Button(self._frame_paths, text=_('Uppdatera'),
                                         command=self._update_files)
         self._button_update.grid(row=1, column=0, padx=5, pady=5, sticky='sw')
 
@@ -229,11 +229,11 @@ class PageSimple(tk.Frame):
         tkw.grid_configure(self._frame_options)
 
         r = 0
-        self._platform = components.LabelDropdownList(frame, 'platform', title='Platform', row=r, column=0,
+        self._platform = components.LabelDropdownList(frame, 'platform', title=_('Platform'), row=r, column=0,
                                                       **layout)
 
         r += 1
-        self._surfacesoak = components.LabelDropdownList(frame, 'surfacesoak', title='Surfacesoak',
+        self._surfacesoak = components.LabelDropdownList(frame, 'surfacesoak', title=_('Surfacesoak'),
                                                                 width=15,
                                                                 row=r, column=0, **layout)
 
@@ -241,7 +241,7 @@ class PageSimple(tk.Frame):
         # self._tau = components.Checkbutton(frame, 'tau', title='Tau', row=r, column=0, **layout)
 
         r += 1
-        self._old_key = components.Checkbutton(frame, 'simple_old_key', title='Generera gammalt filnamn', row=r, column=0, **layout)
+        self._old_key = components.Checkbutton(frame, 'simple_old_key', title=_('Generera gammalt filnamn'), row=r, column=0, **layout)
         self._old_key.set(False)
         self._old_key.checkbutton.config(state='disabled')
 
@@ -257,19 +257,19 @@ class PageSimple(tk.Frame):
 
         r = 0
         tk.Label(frame, textvariable=self._stringvar_nr_packs_tot).grid(row=r, column=0, **layout)
-        tk.Label(frame, text='profiler finns i källmappen').grid(row=r, column=1, **layout)
+        tk.Label(frame, text=_('profiler finns i källmappen')).grid(row=r, column=1, **layout)
 
         r += 1
         tk.Label(frame, textvariable=self._stringvar_nr_packs_missing_local).grid(row=r, column=0, **layout)
-        tk.Label(frame, text='profiler i källmappen finns inte lokalt').grid(row=r, column=1, **layout)
+        tk.Label(frame, text=_('profiler i källmappen finns inte lokalt')).grid(row=r, column=1, **layout)
 
         r += 1
         tk.Label(frame, textvariable=self._stringvar_nr_packs_missing_server).grid(row=r, column=0, **layout)
-        tk.Label(frame, text='profiler i källmappen finns inte på servern').grid(row=r, column=1, **layout)
+        tk.Label(frame, text=_('profiler i källmappen finns inte på servern')).grid(row=r, column=1, **layout)
 
         r += 1
         tk.Label(frame, textvariable=self._stringvar_nr_packs_missing_tot, fg=self._yes_color, font='bold').grid(row=r, column=0, **layout)
-        tk.Label(frame, text='profiler i källmappen finns varken lokalt eller på servern', fg=self._yes_color, font='bold').grid(row=r, column=1, **layout)
+        tk.Label(frame, text=_('profiler i källmappen finns varken lokalt eller på servern'), fg=self._yes_color, font='bold').grid(row=r, column=1, **layout)
 
         r += 1
         listbox_prop_items = {}
@@ -277,7 +277,7 @@ class PageSimple(tk.Frame):
         listbox_prop_selected = {'bg': self._yes_color}
         listbox_prop_selected.update(self._listbox_prop)
         self._files_source = tkw.ListboxSelectionWidget(frame, row=r, column=0, columnspan=2,
-                                                        count_text='filer',
+                                                        count_text=_('filer'),
                                                         prop_items=listbox_prop_items,
                                                         prop_selected=listbox_prop_selected,
                                                         **LISTBOX_TITLES,
@@ -297,15 +297,15 @@ class PageSimple(tk.Frame):
 
         r = 0
 
-        self._button_run = tk.Button(frame, text='Processera', command=self._start_process, width=20, bg=self._yes_color)
+        self._button_run = tk.Button(frame, text=_('Processera'), command=self._start_process, width=20, bg=self._yes_color)
         self._button_run.grid(row=r, column=0, **layout)
 
         r += 1
-        self._button_open_qc = tk.Button(frame, text='Öppna manuell granskning', command=self._open_manual_qc, width=20, bg=self._yes_color)
+        self._button_open_qc = tk.Button(frame, text=_('Öppna manuell granskning'), command=self._open_manual_qc, width=20, bg=self._yes_color)
         self._button_open_qc.grid(row=r, column=0, **layout)
 
         r += 1
-        self._button_close_qc = tk.Button(frame, text='Stäng manuell granskning\nKopiera till server', command=self._close_manual_qc, width=20)
+        self._button_close_qc = tk.Button(frame, text=_('Stäng manuell granskning\nKopiera till server'), command=self._close_manual_qc, width=20)
         self._button_close_qc.grid(row=r, column=0, **layout)
 
         tkw.grid_configure(frame, nr_rows=r + 1, nr_columns=1)
@@ -314,27 +314,27 @@ class PageSimple(tk.Frame):
         all_keys = self._files_source.get_selected()
 
         if not self._config_path.get():
-            messagebox.showwarning('Kör processering', 'Ingen rotkatalog för ctd_config vald!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen rotkatalog för ctd_config vald!'))
             return
 
         if not self._local_data_path_root.get():
-            messagebox.showwarning('Kör processering', 'Ingen rotkatalog för lokal data vald!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen rotkatalog för lokal data vald!'))
             return
 
         if not self._server_data_path_root.get():
-            messagebox.showwarning('Kör processering', 'Ingen rotkatalog för data på servern vald!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen rotkatalog för data på servern vald!'))
             return
 
         if not self._platform.value:
-            messagebox.showwarning('Kör processering', 'Ingen platform vald!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen platform vald!'))
             return
 
         if not self._surfacesoak.value:
-            messagebox.showwarning('Kör processering', 'Ingen surfacesoak vald!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen surfacesoak vald!'))
             return
 
         if not all_keys:
-            messagebox.showwarning('Kör processering', 'Ingen filer är valda för processering!')
+            messagebox.showwarning(_('Kör processering'), _('Ingen filer är valda för processering!'))
             return
 
         self._button_run.configure(state='disable')
@@ -389,13 +389,11 @@ class PageSimple(tk.Frame):
                     continue_trying = False
                 except FileExistsError:
                     messagebox.showerror('File exists',
-                                         f'Filen finns redan. Använd avancerad processering om du vill processera igen\
-                                         n{path}')
+                                         _('Filen finns redan. Använd avancerad processering om du vill processera igen\n{}').format(path))
                     return
                 except file_explorer.seabird.MismatchWarning as e:
-                    ans = messagebox.askyesnocancel('Mismatch mellan filer',
-                                                    f"""{e.data}\n\n
-                                                Välj "Ja" för att försöka lösa problemet. \nVälj "Nej" för att lösa problemet i seabird programvara. \nVälj "Avbryt" för att avbryta. """)
+                    ans = messagebox.askyesnocancel(_('Mismatch mellan filer'),
+                                                    _("""{}\n\nVälj "Ja" för att försöka lösa problemet. \nVälj "Nej" för att lösa problemet i seabird programvara. \nVälj "Avbryt" för att avbryta.""").format(e.data))
                     if ans is True:
                         try_fixing_mismatch = True
                     elif ans is False:
@@ -403,7 +401,7 @@ class PageSimple(tk.Frame):
                     else:
                         return
                 except Exception as e:
-                    messagebox.showerror('Något gick fel', traceback.format_exc())
+                    messagebox.showerror(_('Något gick fel'), traceback.format_exc())
                     raise
                 finally:
                     self._button_run.configure(state='normal')
@@ -425,7 +423,7 @@ class PageSimple(tk.Frame):
             #         continue
             #     packs.append(pack)
             if not packs:
-                messagebox.showerror('Skapar standardformat', 'Inga CNV filer valda för att skapa standardformat!')
+                messagebox.showerror(_('Skapar standardformat'), _('Inga CNV filer valda för att skapa standardformat!'))
                 return
             new_packs = ctd_processing.create_standard_format_for_packages(packs,
                                                                            file_handler=self.file_handler,
@@ -433,10 +431,10 @@ class PageSimple(tk.Frame):
                                                                            sharkweb_btl_row_file=None,
                                                                            old_key=self._old_key.value)
         except PermissionError as e:
-            messagebox.showerror('Skapa standardformat',
-                                 f'Det verkar som att en file är öppen. Stäng den och försök igen: {e}')
+            messagebox.showerror(_('Skapa standardformat'),
+                                 _('Det verkar som att en file är öppen. Stäng den och försök igen: {}').format(e))
         except Exception:
-            messagebox.showerror('Skapa standardformat', f'Internt fel: \n{traceback.format_exc()}')
+            messagebox.showerror(_('Skapa standardformat'), _('Internt fel: \n{}').format(traceback.format_exc()))
             raise
 
     # def _get_active_nsf_packs(self):
@@ -465,7 +463,7 @@ class PageSimple(tk.Frame):
         files = [pack['txt'] for pack in packs]
         logger.info(f'{files=}')
         if not files:
-            messagebox.showwarning('Automatisk granskning', 'Inga filer att granska!')
+            messagebox.showwarning(_('Automatisk granskning'), _('Inga filer att granska!'))
             return
 
         tkw.disable_buttons_in_class(self)
@@ -516,7 +514,7 @@ class PageSimple(tk.Frame):
                 shutil.copyfile(source_path, target_path)
             return data_path
         except Exception:
-            messagebox.showwarning('Automatisk granskning', traceback.format_exc())
+            messagebox.showwarning(_('Automatisk granskning'), traceback.format_exc())
             raise
 
     def _open_manual_qc(self):
@@ -558,7 +556,7 @@ class PageSimple(tk.Frame):
         self._button_close_qc.config(bg=self._button_bg_color)
         self._copy_files_to_server()
         self._update_files()
-        self._notebook.select_frame('Skicka via FTP')
+        self._notebook.select_frame(_('Skicka via FTP'))
 
     def _create_plots(self):
         packs = self._get_active_nsf_packs()
@@ -587,7 +585,7 @@ class PageSimple(tk.Frame):
         # for _id in self._active_ids:
         #     pack = local_packs.get(_id)
         #     if not pack:
-        #         messagebox.showerror('Något gick fel', 'Kunde inte kopiera till server. Hittar inga filer att kopiera...')
+        #         messagebox.showerror(_('Något gick fel'), _('Kunde inte kopiera till server. Hittar inga filer att kopiera...'))
         #         return
         #     if 'test' in pack.pattern.lower():
         #         logger.warning(f'TEST package not copied to server: {pack} ')
@@ -720,7 +718,7 @@ class PageSimple(tk.Frame):
     def file_handler(self):
         year = self._year.get()
         if not year:
-            messagebox.showinfo('Inget år', 'Inget år är valt för processeringen')
+            messagebox.showinfo(_('Inget år'), _('Inget år är valt för processeringen'))
             return
         return self._file_handlers.setdefault(year, get_seabird_file_handler(year=year))
 
