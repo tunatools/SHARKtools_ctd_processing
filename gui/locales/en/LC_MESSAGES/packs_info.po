@@ -1,0 +1,52 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Första tid"
+msgstr "first time"
+
+msgid "Sista tid"
+msgstr "last time"
+
+msgid "Antal paket"
+msgstr "amount of packages"
+
+msgid "Antal paket med rätt nyckel"
+msgstr "amount of packages and their key"
+
+msgid "Antal processerade paket"
+msgstr "amount of processed packages"
+
+msgid "Antal paket med standardformat"
+msgstr "amount of packages with standard format"
+
+msgid "Matchande nycklar"
+msgstr "matching keys"
+
+msgid "Sammanställning"
+msgstr "compilation"
+
+msgid "Metadata"
+msgstr "metadata"
+
+msgid "Antal {}-filer:"
+msgstr "amount {}-files:"
+
+msgid "Metadatavariabel:"
+msgstr "metadata variable:"
+
+msgid "Visa"
+msgstr "display"
+
+msgid "Unika förekomster:"
+msgstr "unique occurrences"
+
+msgid "Antal paket"
+msgstr "amount of packages"
+
+msgid "Antal"
+msgstr "amount"
