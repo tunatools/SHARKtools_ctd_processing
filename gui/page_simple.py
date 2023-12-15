@@ -30,7 +30,7 @@ from ..utils import get_files_in_directory
 from ..utils import open_paths_in_default_program
 from .locales import Translator
 
-_ = Translator('page_simple', 'en').lang.gettext
+_ = Translator('page_simple').lang.gettext
 logger = logging.getLogger(__name__)
 
 LISTBOX_TITLES = dict(title_items=dict(text=_('Välj filer genom att dubbelklicka'),
@@ -110,7 +110,7 @@ class PageSimple(tk.Frame):
         self._callback_change_year()
         self._update_lists()
         self._save_obj.load(component=self._surfacesoak, user=self.user.name)
-        self._notebook.select_frame('Processering')
+        self._notebook.select_frame(_('Processering'))
 
     def close(self):
         self._close_manual_qc()
